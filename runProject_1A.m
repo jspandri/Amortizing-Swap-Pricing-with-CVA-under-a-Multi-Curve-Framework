@@ -16,3 +16,8 @@ addpath("data\")
 
 %% Settings
 formatData = 'dd/mm/yyyy';
+
+settlement = datenum("28-Jun-2022");
+
+%%
+[euriborSet, estrSet] = read_Excel_data("20220626_Curve.xlsx", settlement);
