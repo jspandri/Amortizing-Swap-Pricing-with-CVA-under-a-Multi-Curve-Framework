@@ -20,6 +20,10 @@ else
     rule = "follow";
 end
 
+% Fix just an old holiday to avoid matlab using the US holidays calendar
+% (in this way both isbusday and busdate consider only weekends as holidays)
+holidays= [datenum("01-Jan-2000")];
+
 
 if n > 1
 
@@ -35,9 +39,9 @@ if n > 1
         dates(i) = increment_date(t0, d*i, m*i, y*i);
 
         % If not a business day: holiday
-        if ~isbusday(dates(i))
+        if ~isbusday(dates(i), holidays)
             % Return follow or modified follow date
-            dates(i) = busdate(dates(i), rule);
+            dates(i) = busdate(dates(i), rule, holidays);
         end
 
     end
@@ -63,9 +67,9 @@ else
         dates(i) = increment_date(t0, d(i), m(i), y(i));
 
         % If not a business day: holiday
-        if ~isbusday(dates(i))
+        if ~isbusday(dates(i), holidays)
             % Return follow or modified follow date
-            dates(i) = busdate(dates(i), rule);
+            dates(i) = busdate(dates(i), rule, holidays);
         end
 
     end

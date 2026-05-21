@@ -21,3 +21,7 @@ settlement = datenum("28-Jun-2022");
 
 %%
 [euriborSet, estrSet] = read_Excel_data("20220626_Curve.xlsx", settlement);
+
+[discounts, pseudo] = multi_curve_bootstrap(euriborSet, estrSet)
+
+zerorates = from_discount_factors_to_zero_rates(settlement, estrSet.dates, discounts)

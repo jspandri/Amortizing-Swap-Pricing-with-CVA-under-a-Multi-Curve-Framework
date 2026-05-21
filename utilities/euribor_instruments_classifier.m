@@ -1,7 +1,7 @@
 function euriborSet = euribor_instruments_classifier(euribor_table, settlement)
 
 instruments = string(euribor_table.(euribor_table.Properties.VariableNames{1}));
-rates = euribor_table{:,2};
+rates = euribor_table{:,2} ./ 100;
 
 euriborSet = struct();
 datesSet = struct();
