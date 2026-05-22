@@ -1,4 +1,4 @@
-function [prices, results_table] = run_hw_pricing_amortizing_swap_CVA(a, sigma, K, ...
+function results_struct = run_hw_pricing_amortizing_swap_CVA(a, sigma, K, ...
     startDate, maturity_date_not_adjusted, precision_levels, notional_amortized, ...
     RecoveryRate,HazardRate, ois_curve, eur_curve)
 % RUN_HW_PRICING_AMORTIZING_SWAP_CVA Manages the convergence loop for pricing.
@@ -22,8 +22,12 @@ function [prices, results_table] = run_hw_pricing_amortizing_swap_CVA(a, sigma, 
 %   HazardRate                 : [Scalar] Constant hazard rate (lambda) for default probability.
 %
 % OUTPUTS:
-%   prices                     : [Vector] Amortizing swap prices for each precision level.
-%   results_table              : [Table] Summary table containing steps, nodes, and prices.
+%   results_struct             : [Struct] Convergence summary containing the following fields:
+%                                  .Steps_Per_Year       [Vector] Tested grid resolutions.
+%                                  .Total_Time_Steps     [Vector] Total tree nodes per run.
+%                                  .Risk_free_Swap_Price [Vector] Prices excluding default risk.
+%                                  .CVA                  [Vector] Credit Valuation Adjustment values.
+%                                  .Risky_Swap_Price     [Vector] Final prices including default risk.
 
     % Initialize output vectors
     n_levels = length(precision_levels);
@@ -56,8 +60,12 @@ function [prices, results_table] = run_hw_pricing_amortizing_swap_CVA(a, sigma, 
             paymentDates, yf, notional_amortized, RecoveryRate, HazardRate);
     end
 
-    % Format execution summary table
-    results_table = table(precision_levels(:), num_nodes(:), prices_clean(:), ...
-         CVA(:), prices(:), 'VariableNames', {'Steps_Per_Year', ...
-         'Total_Time_Steps', 'Risk-free_Swap_Price', 'CVA','Risky_Swap_Price'});
+    % Format execution summary into a struct
+    results_struct = struct();
+    results_struct.Steps_Per_Year = precision_levels(:);
+    results_struct.Total_Time_Steps = num_nodes(:);
+    results_struct.Risk_free_Swap_Price = prices_clean(:);
+    results_struct.CVA = CVA(:);
+    results_struct.Risky_Swap_Price = prices(:);
+
 end
