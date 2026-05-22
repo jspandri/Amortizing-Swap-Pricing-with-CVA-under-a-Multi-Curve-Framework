@@ -17,42 +17,34 @@ function [paymentDates, yf] = compute_swap_payments_dates_yf(reference_date, mat
 %   yf             : [Column Vector] Year fractions between payment dates (ACT/360).
 
     % Convert inputs to datetime objects 
-    if isdatetime(reference_date)
-        reference_date = datenum(reference_date);
+    if ~isdatetime(reference_date)
+        reference_date = datetime(reference_date, 'ConvertFrom', 'datenum');
     end
-    if isdatetime(maturity_date_unadj)
-        maturity_date_unadj = datenum(maturity_date_unadj);
+    if ~isdatetime(maturity_date_unadj)
+        maturity_date_unadj = datetime(maturity_date_unadj, 'ConvertFrom', 'datenum');
     end
 
-    % We calculate the maximum number of 3-month periods (quarterly) between dates
+   % We calculate the maximum number of 3-month periods (quarterly) between dates
     max_periods = ceil(years(maturity_date_unadj - reference_date) * 4); 
 
-    % Generate the vector of month offsets (rolling backwards by 3 months)
-    m_offsets = -3 * (0:max_periods)';
-    
-    % Replicate the scalar maturity_date to match the dimension of offsets
-    mat_dates_vec = repmat(maturity_date_unadj, length(m_offsets), 1);
+    % We generate all unadjusted potential payment dates going backwards from maturity
+    potential_payment_dates = maturity_date_unadj - calmonths(0:3:(3 * max_periods));
 
-    % Compute unadjusted dates by shifting the maturity dates backward
-    % using the month offsets array.
-    unadj_dates = increment_date(mat_dates_vec, 0, m_offsets, 0);
+    % We filter dates to keep only those strictly after the reference date and sort them
+    unadj_dates = sort(potential_payment_dates(potential_payment_dates > reference_date));
+    num_dates = length(unadj_dates);
 
-    % Retain only dates that are strictly in the future relative to the reference date.
-    unadj_dates = unadj_dates(unadj_dates > reference_date);
-    
-    % Sort chronologically (from earliest future payment to maturity).
-    unadj_dates = sort(unadj_dates);
-
-    % Apply business day adjustment using modified_following' rule.
-    paymentDates = following_day_convention(unadj_dates, 0, 0, 0, 1, true);
+    % We apply business day adjustment
+    paymentDates = zeros(num_dates, 1);
+    for i = 1:num_dates
+        paymentDates(i) = following_day_convention(unadj_dates(i), 0, 0, 0, 1, true);
+    end
 
     % We compute ACT/360 year fractions
     % The start dates for each period are: reference_date (for the 1st) and 
     % the previous adjusted payment dates for the subsequent ones
-    start_dates = [reference_date; paymentDates(1:end-1)];
+    start_dates = [datenum(reference_date); paymentDates(1:end-1)];
     end_dates = paymentDates;
     yf = yearfrac(start_dates, end_dates, 2); 
 
 end
-
- 
