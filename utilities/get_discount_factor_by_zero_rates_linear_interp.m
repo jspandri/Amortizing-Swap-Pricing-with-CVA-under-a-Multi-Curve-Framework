@@ -24,6 +24,11 @@ if ~isnumeric(discount_factors)
     error('Input discount_factors must be a numeric array.');
 end
 
+if any(interp_date > max(dates) + 1)
+    error('Trying to extrapolate but it is forbidden.')
+end    
+
+
 %%
 
 dates = dates(:);
