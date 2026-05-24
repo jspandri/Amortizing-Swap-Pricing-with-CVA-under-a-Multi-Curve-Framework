@@ -1,4 +1,4 @@
-function df_interp = get_discount_factor_by_zero_rates_linear_interp(reference_date, interp_date, dates, discount_factors)
+function df_interp = get_discount_factor_by_zero_rates_linear_interp(reference_date, interp_date, dates, discount_factors, allow_extrap)
 % Given a vector of discount factors, return the discount factors at given 
 % dates by linear interpolation.
 %
@@ -8,9 +8,16 @@ function df_interp = get_discount_factor_by_zero_rates_linear_interp(reference_d
 %                         which we extract DF)
 %   dates               - available DF dates
 %   discount_factors    - discount factors at corresponding dates
+%   allow_extrap        - (optional) bool: if true allows extrapolation.        
+%                                          Default: false.
 %
 % OUTPUTS:
 %   df_interp   - interpolated discount factors at interp_date
+
+
+if nargin < 5 || isempty(allow_extrap)
+    allow_extrap = false;
+end
 
 % INPUT VALIDATION
 
@@ -24,7 +31,7 @@ if ~isnumeric(discount_factors)
     error('Input discount_factors must be a numeric array.');
 end
 
-if any(interp_date > max(dates) + 1)
+if ~allow_extrap && any(interp_date > max(dates) + 1)
     error('Trying to extrapolate but it is forbidden.')
 end    
 

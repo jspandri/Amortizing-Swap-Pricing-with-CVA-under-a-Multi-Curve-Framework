@@ -72,17 +72,18 @@ for i = 1:length(idx_above_1y)
     % Define if it is a full years maturity 
     is_full_year = (yearly_dates == T);
     
-    % If maturity is on yearly dates (ex. 1Y, 2Y, 3Y...)
+    % If maturity is on yearly dates >1Y (ex. 2Y, 3Y...)
     if any(is_full_year)
         % Extract only past known discounts and deltas
         valid_dates = (yearly_dates < T);
         discounts_k = yearly_discounts(valid_dates);
-        deltas_k = yearly_deltas(valid_dates);
+        deltas_k = yearly_deltas(valid_dates);   
         
         % Compute fixed leg and last delta_i
         fixed_leg = sum(deltas_k(:) .* discounts_k(:));
-        last_date = yearly_dates(find(valid_dates, 1, 'last')); 
-        delta_i = yearfrac(last_date, T, 2); % ACT/360
+        last_date = yearly_dates(valid_dates);
+        last_date = last_date(end);
+        delta_i = yearfrac(last_date, T, 2) ;% ACT/360  
         
         % Compute discount at T
         discount = (1 - R_ois * fixed_leg) / (1 + delta_i * R_ois);
@@ -147,6 +148,7 @@ depo_discount = 1 / (1 + delta * depo_rate);
 
 pseudo_dates = [settlement; depo_date];
 pseudo_discounts = [1; depo_discount];
+
 
 
 % 2) 3x6 Future (6m discount)
@@ -236,7 +238,7 @@ for i = 1:length(futures_starts)
     if end_future >= first_swap_maturity || start_future > pseudo_dates(end)
         break; 
     end
-    
+
     % SKIP if curve has already been covered at future maturity
     if pseudo_dates(end) >= end_future
         continue;
@@ -261,37 +263,56 @@ end
 
 % 5) Swaps (minimum >2Y discount) 
 
-% Pre-compute deltas and discounts for fixed and floating legs
+% Pre-compute schedules, deltas and known discounts
 longest_swap_years = round(yearfrac(settlement, max(swaps_dates), 0));
 % Fixed leg
-full_schedule_fixed = following_day_convention(settlement, 0, 0, 1, longest_swap_years, true);
+full_schedule_fixed = [settlement; following_day_convention(settlement, 0, 0, 1, ...
+                        longest_swap_years, true)];
 full_deltas_fixed = yearfrac(full_schedule_fixed(1:end-1), full_schedule_fixed(2:end), 6); %30/360
 full_discounts_fixed = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
     full_schedule_fixed(2:end), discountCurve.dates, discountCurve.discounts);
 % Floating leg
-full_schedule_float = following_day_convention(settlement, 0, 3, 0, longest_swap_years*4, true);
+full_schedule_float = [settlement; following_day_convention(settlement, 0, 3, 0, ...
+                        longest_swap_years*4, true)];
 full_t_prev_float = full_schedule_float(1:end-1);
 full_t_curr_float = full_schedule_float(2:end);
-full_discounts_float_prev = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
-    full_t_prev_float, discountCurve.dates, discountCurve.discounts);
-full_discounts_float_curr = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
-    full_t_curr_float, discountCurve.dates, discountCurve.discounts);
+full_discounts_float = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
+    full_schedule_float, discountCurve.dates, discountCurve.discounts);
+full_discounts_float_prev = full_discounts_float(1:end-1);
+full_discounts_float_curr = full_discounts_float(2:end);
 
-% Fixed leg at 0Y
-I_prev = 0; 
+%Compute previous year fixed leg to allow iterative computation of next
+%swaps through beta piecewise constant
 
+% Find last known dates and discounts
+last_future_date = pseudo_dates(end);
+idx_known = find(full_t_curr_float <= last_future_date);
+num_quarters_known = length(idx_known);
+schedule_float_known = full_schedule_float(1 : num_quarters_known + 1);
+
+deltas_float_known = yearfrac(full_t_prev_float(1:num_quarters_known), full_t_curr_float(1:num_quarters_known), 2);
+pseudo_disc = get_discount_factor_by_zero_rates_linear_interp(settlement, schedule_float_known, ... 
+                pseudo_dates, pseudo_discounts);
+pseudo_prev = pseudo_disc(1:end-1);
+pseudo_curr = pseudo_disc(2:end);
+
+% Compute fixed leg (= floating leg by NPV)
+L_k = (pseudo_prev ./ pseudo_curr - 1) ./ deltas_float_known;
+float_leg = deltas_float_known .* L_k .* full_discounts_float_curr(1:num_quarters_known);
+I_prev = sum(float_leg);
+
+% Now start to bootstrap using available swap rates
 for i = 1:length(swaps_dates)
-    % Extract swap rate
+    % Extract current swap rate
     swap_rate = swaps_rates(i);
     years = round(yearfrac(settlement, swaps_dates(i), 0));
-    
+
     % FIXED LEG
     % Extract deltas and discounts
-    deltas_fixed = full_deltas_fixed(1:years-1);
-      
-    discounts_fixed = full_discounts_fixed(1:years-1);
-    
-    % Compute fixed leg and difference with previous year
+    deltas_fixed = full_deltas_fixed(1:years);
+    discounts_fixed = full_discounts_fixed(1:years);
+
+    % Compute fixed leg and the difference with previous year
     I_curr = swap_rate * sum(deltas_fixed(:) .* discounts_fixed(:));
     I_diff = I_curr - I_prev;
     I_prev = I_curr;
@@ -299,7 +320,7 @@ for i = 1:length(swaps_dates)
     % FLOATING LEG
     % Extract current dates
     num_quarters = (years) * 4;
-    t_curr = full_t_curr_float(1:num_quarters-1);
+    t_curr = full_t_curr_float(1:num_quarters);
 
     % Determine unknown dates
     T_known = pseudo_dates(end);
@@ -318,7 +339,7 @@ for i = 1:length(swaps_dates)
     sum_prev_discounts = sum(discounts_float_prev);
     sum_curr_discounts = sum(discounts_float_curr);
     beta = (I_diff + sum_curr_discounts) / sum_prev_discounts;
-    
+
     % Compute intermediate quarterly discounts
     % Extract first unknown date
     t_start = full_t_prev_float(idx_unknown(1));
@@ -331,7 +352,7 @@ for i = 1:length(swaps_dates)
 
     new_pseudo_dates = t_curr(idx_unknown);
     new_pseudo_discounts = zeros(length(idx_unknown), 1);
-    
+
     for k = 1:length(idx_unknown)
         % Compute forward pseudo-discount from definition of beta
         pseudo_forward = discounts_float_curr(k) / (discounts_float_prev(k) * beta);
@@ -339,20 +360,21 @@ for i = 1:length(swaps_dates)
         pseudo_curr = pseudo_curr * pseudo_forward;
         new_pseudo_discounts(k) = pseudo_curr;
     end
-    
+
     pseudo_dates = [pseudo_dates; new_pseudo_dates(:)];
     pseudo_discounts = [pseudo_discounts; new_pseudo_discounts(:)];
-    
+
     %Sort
     [pseudo_dates, sort_idx] = sort(pseudo_dates);
     pseudo_discounts = pseudo_discounts(sort_idx);
 end
 
+
 % Compute zerorates
 euriborZerorates = from_discount_factors_to_zero_rates(settlement, pseudo_dates, pseudo_discounts);
 
 % Save pseudo-discounting curve into a struct
-pseudoCurve = struct('discounts', pseudo_discounts, 'zeroRates', euriborZerorates, 'dates', pseudo_dates);
+pseudoCurve = struct('discounts', pseudo_discounts(2:end), 'zeroRates', euriborZerorates(2:end), 'dates', pseudo_dates(2:end));
 
 
 %% PLOT
@@ -362,10 +384,10 @@ figure;
 eurDates  = datetime(pseudoCurve.dates, 'ConvertFrom', 'datenum');
 estrDates = datetime(discountCurve.dates, 'ConvertFrom', 'datenum');
 
-plot(eurDates, euriborZerorates,  'LineWidth', 1.5);
+plot(eurDates, pseudoCurve.zeroRates,  'LineWidth', 1.5);
 hold on;
 
-plot(estrDates, estrZerorates, 'LineWidth', 1.5);
+plot(estrDates, discountCurve.zeroRates, 'LineWidth', 1.5);
 
 grid on;
 zoom on;
@@ -375,4 +397,5 @@ ylabel('Zero Rate');
 title('EURIBOR vs ESTR Zero Rates');
 
 legend('EURIBOR', 'ESTR', 'Location', 'best');
+
 end
