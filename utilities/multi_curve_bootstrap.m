@@ -394,8 +394,8 @@ zoom on;
 
 xlabel('Date');
 ylabel('Zero Rate');
-title('EURIBOR vs ESTR Zero Rates');
+title('EURIBOR3M vs OIS ESTR Zero Rates');
 
-legend('EURIBOR', 'ESTR', 'Location', 'best');
+legend('EURIBOR3M', 'OIS ESTR', 'Location', 'best');
 
 end
