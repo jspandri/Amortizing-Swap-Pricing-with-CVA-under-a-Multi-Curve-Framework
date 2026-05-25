@@ -68,6 +68,6 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, sigma, 
         w_end   = notional_amortized(idx_float);
         
         % Vectorized cash flow injection via matrix multiplication
-        V = V - B_curr_start * w_start(:) - B_curr_end * w_end(:);
+        V = V - B_curr_start * w_start(:) + B_curr_end * w_end(:);
     end
 end
