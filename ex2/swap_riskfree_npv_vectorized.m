@@ -1,4 +1,4 @@
-function [npvCorporate, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv_vectorized(settlement, scheduleSwap, estCurv, euliborCurv)
+function [npvCorporate, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv_vectorized(settlement, scheduleSwap, estCurv, euliborCurv,K)
     % SWAP_RISKFREE_NPV_VECTORIZED Calculates the Risk-Free NPV of an amortizing IRS
     %   using a fully vectorized approach without for-loops.
     %
@@ -14,8 +14,6 @@ function [npvCorporate, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv_vectorized
     %   npvFixedLeg  - Present Value of the Fixed Leg
     %   npvFloatLeg  - Present Value of the Floating Leg
 
-    % Fixed strike rate from the Swap Termsheet
-    K = 0.0221; 
     
     % Ensure dates are in datenum format to avoid interpolation errors
     startDates = datenum(scheduleSwap.accrualStart);

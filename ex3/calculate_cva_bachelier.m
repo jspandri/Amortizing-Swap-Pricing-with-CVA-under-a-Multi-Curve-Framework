@@ -1,54 +1,42 @@
-function [CVA, EE_profile] = calculate_cva_bachelier(settlement, scheduleSwap, estCurv, euliborCurv, volData, hazardRate, recoveryRate,K)
-    % CALCULATE_CVA_BACHELIER Computes the Credit Value Adjustment (CVA)
-    % for an amortizing swap using the Bachelier swaption pricing model.
+function [CVA, EE_profile] = calculate_cva_bachelier(settlement, scheduleSwap, swapMarketData, volData, hazardRate, recoveryRate, K, estCurv)
+    % CALCULATE_CVA_BACHELIER Computes the Credit Value Adjustment (CVA) 
+    % for an amortizing swap using a fully vectorized Bachelier pricing model.
+    %
+    % This function calculates the expected exposure and default probabilities 
+    % across all payment nodes simultaneously without the use of for-loops,
+    % ensuring maximum computational efficiency.
     %
     % Inputs:
-    %   settlement   - Settlement date (datenum)
-    %   scheduleSwap - Struct containing swap amortizing plan
-    %   estCurv      - Struct with OIS curve (discount_factors)
-    %   euliborCurv  - Struct with Euribor 3M curve (discount_factors)
-    %   volData      - Struct with implied volatility matrix
-    %   hazardRate   - Constant intensity of default (lambda), e.g., 0.02 for 2%
-    %   recoveryRate - Expected recovery rate (R), e.g., 0.40 for 40%
+    %   settlement     - Settlement date (datenum)
+    %   scheduleSwap   - Struct containing the swap amortizing schedule
+    %   swapMarketData - Struct containing pre-calculated market data vectors
+    %                    (e.g., P_ois_pay, F_forward)
+    %   volData        - Struct containing implied volatility surface/matrix
+    %   hazardRate     - Constant intensity of default (lambda), e.g., 0.02
+    %   recoveryRate   - Expected recovery rate (R), e.g., 0.40
+    %   K              - Strike rate for the swaptions
+    %   estCurv        - Struct containing the OIS zero curve for BPV mapping
     %
     % Outputs:
-    %   CVA          - Total Credit Value Adjustment in EUR
-    %   EE_profile   - Vector of Expected Exposures at each payment date
-
-    numPeriods = length(scheduleSwap.payDates);
-    CVA = 0;
+    %   CVA            - Total Credit Value Adjustment (scalar)
+    %   EE_profile     - Vector of Expected Exposures at each payment date
     
-    % Pre-allocate the Expected Exposure profile (useful for plotting)
-    EE_profile = zeros(numPeriods, 1);
+    % --- Date vector and time to expiry calculation (T_i) ---
+    payDates_num = datenum(scheduleSwap.payDates);
+    T_exp = yearfrac(settlement, payDates_num, 3); % ACT/365
     
-    % Initial Survival Probability at t_0 (Settlement Date) is exactly 100%
-    SP_prev = 1.0; 
+    % --- Vectorized Survival and Default Probabilities ---
+    SP = exp(-hazardRate * T_exp);
+    SP_prev = [1; SP(1:end-1)]; % Forward shift to obtain SP_{i-1}
+    PD = SP_prev - SP;          % Marginal Probability of Default for each node
     
-    % Loop through each possible default date (which we assume happens at t_i)
-    for i = 1:numPeriods
-        % PROBABILITY OF DEFAULT (Marginal PD for the current interval
-        T_i = yearfrac(settlement, datenum(scheduleSwap.payDates(i)), 3); % ACT/365
+    % --- EXPECTED EXPOSURE CALCULATION (Single vectorized call) ---
+    % The pricing function returns the entire time profile at once!
+    [EE_profile, ~, ~, ~] = price_swap_bachelier(...
+        settlement, scheduleSwap, swapMarketData, volData, K, estCurv, T_exp);
         
-        % Survival probability up to T_i using constant hazard rate
-        SP_curr = exp(-hazardRate * T_i);
-        
-        % Marginal Probability of Default between t_{i-1} and t_i
-        PD_i = SP_prev - SP_curr;
-       
-        % EXPECTED EXPOSURE (Swaption Pricing via BPV Matching)
-        % Call your Bachelier pricing function for default at step 'i'
-        % The target swap residual life ends at 'numPeriods' (omega)
-        [swaptionPrice, ~, ~, ~] = price_swap_bachelier(...
-            settlement, i, numPeriods, scheduleSwap, estCurv, euliborCurv, volData,K);
-        
-        % Store the Expected Exposure (EE) for this period
-        EE_profile(i) = swaptionPrice;
-        
-        % CVA ACCUMULATION
-        % Loss Given Default (LGD) is (1 - Recovery Rate)
-        CVA = CVA + (1 - recoveryRate) * EE_profile(i) * PD_i;
-        
-        % Update the previous survival probability for the next iteration
-        SP_prev = SP_curr;
-    end
+    % --- CVA ACCUMULATION (Dot product of the vectors) ---
+    % Expected Exposure * Marginal PD * Loss Given Default
+    CVA = sum((1 - recoveryRate) .* EE_profile .* PD);
+    
 end
