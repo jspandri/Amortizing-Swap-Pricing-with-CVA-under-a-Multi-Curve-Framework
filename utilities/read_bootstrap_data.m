@@ -1,4 +1,4 @@
-function [euriborSet, estrSet] = read_Excel_data(filename, settlement)
+function [euriborSet, estrSet] = read_bootstrap_data(filename, settlement)
 % Read Excel data of Euribor3m and OIS ESTR instruments (1st and 2nd
 % sheets) and computes corresponding dates.
 % Returns euriborSet and estrSet containing ordered and classified
