@@ -28,15 +28,15 @@ function [npvCorporate, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv_vectorized
     
     % DISCOUNTING: ESTR / OIS Curve
     B_ois = get_discount_factor_by_zero_rates_linear_interp(...
-        settlement, payDates, estCurv.dates, estCurv.discount_factors);
+        settlement, payDates, estCurv.dates, estCurv.discounts);
         
     % FORECASTING: Euribor 3M Curve
     %non sono sicuro che se calcolo L_forward devo iniziare da 2 BD prima ?
     P_euri_start = get_discount_factor_by_zero_rates_linear_interp(...
-        settlement, startDates, euliborCurv.dates, euliborCurv.discount_factors);
+        settlement, startDates, euliborCurv.dates, euliborCurv.discounts);
         
     P_euri_end = get_discount_factor_by_zero_rates_linear_interp(...
-        settlement, endDates, euliborCurv.dates, euliborCurv.discount_factors);
+        settlement, endDates, euliborCurv.dates, euliborCurv.discounts);
         
     % Compute the forward rates for all periods simultaneously
     F_forward = (1 ./ deltas) .* (P_euri_start ./ P_euri_end - 1);
