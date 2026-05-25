@@ -18,10 +18,16 @@ addpath("ex3\")
 formatData = 'dd/mm/yyyy';
 settlement = datenum("28-Jun-2022");
 
+vol_data = read_vol_matrix_data("20220626_vol_matrix.xlsx", settlement);
+
+
 %% Read data
 
-[euriborSet, estrSet] = read_Excel_data("20220626_Curve.xlsx", settlement);
+[euriborSet, estrSet] = read_bootstrap_data("20220626_Curve.xlsx", settlement);
+
 scheduleSwap = read_amortizing_plan('SwapAmortizingPlan_v1', 'SwapPlan');
+
+vol_matrix = read_vol_matrix_data("20220626_vol_matrix.xlsx", settlement);
 
 
 %% 1) Multi-Curve Bootstrap
@@ -77,6 +83,14 @@ NPV=npvCorporate-Total_CVA;
 
 %% Point 4 --Unwinding 
 
+
+
+%% 5) Multi-Curve Swaption Model
+
+diag_expiries = [1, 3, 5, 8, 10, 12, 15]; 
+diag_tenors = [15, 12, 10, 7, 5, 3, 1];
+
+calibrate_multicurve_swaption_model(settlement, discountCurve, pseudoCurve, vol_data, diag_expiries, diag_tenors);
 
 %% Point 6: Hull-White Tree Pricing, Convergence, and Error Analysis
 
