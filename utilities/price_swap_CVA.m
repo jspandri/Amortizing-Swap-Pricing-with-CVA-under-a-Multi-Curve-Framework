@@ -66,7 +66,7 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, K, dt, ...
 
     % 2. INITIALIZE TREE VECTORS AT MATURITY (t = T_max)
     CVA_tree = zeros(N_nodes, 1);
-    V = -ones(N_nodes, 1) * notional_amortized(end) * K * yf(end);
+    V = ones(N_nodes, 1) * notional_amortized(end) * K * yf(end);
     
     % Precompute tree branching geometry
     [p_u, p_m, p_d, idx_u, idx_m, idx_d] = compute_tree_geometry(x_grid, l_max, mu_hat);
