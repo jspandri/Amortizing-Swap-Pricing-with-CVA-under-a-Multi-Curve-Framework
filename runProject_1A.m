@@ -52,8 +52,8 @@ HazardRates                = CDS_spreads / (1 - RecoveryRate);
 K_strike    = 0.0221;       % Fixed strike rate of the underlying swap
 
 % Calibrated Hull-White parameters (from Point 5)
-a_param     = 0.01;       % Mean reversion speed
-sigma_param = 0.08;      % Volatility of the short rate
+%a_param     = ;       % Mean reversion speed
+%sigma_param = ;      % Volatility of the short rate
 
 % Discretization levels (Time steps per year)
 precision_levels = [1, 4, 12, 52, 365]; 
