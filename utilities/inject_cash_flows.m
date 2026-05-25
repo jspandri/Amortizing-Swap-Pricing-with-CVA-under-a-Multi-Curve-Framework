@@ -28,7 +28,7 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, sigma, 
 % OUTPUTS:
 %   V                  : [Vector, N_nodes x 1] Updated clean swap value tree vector after injection.
 
-    % 1. FIXED LEG (Subtracted at the node prior to payment)
+    % 1. FIXED LEG (Added at the node prior to payment)
     idx_fixed = find(node_fixed_pay == step_i);
     
     % The maturity payment is already initialized at N_steps, skip it during rollback
@@ -47,10 +47,10 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, sigma, 
         w_fixed = notional_amortized(idx_fixed) .* K .* yf(idx_fixed);
         
         % Vectorized subtraction of all overlapping fixed flows
-        V = V - B_curr_pay * w_fixed(:);
+        V = V + B_curr_pay * w_fixed(:);
     end
 
-    % 2. FLOATING LEG (Added at the node prior to reset)
+    % 2. FLOATING LEG (Subtracted at the node prior to reset)
     idx_float = find(node_float_reset == step_i);
     
     if ~isempty(idx_float)
@@ -68,6 +68,6 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, sigma, 
         w_end   = notional_amortized(idx_float);
         
         % Vectorized cash flow injection via matrix multiplication
-        V = V + B_curr_start * w_start(:) - B_curr_end * w_end(:);
+        V = V - B_curr_start * w_start(:) - B_curr_end * w_end(:);
     end
 end
