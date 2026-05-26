@@ -77,8 +77,8 @@ HazardRates                = CDS_spreads / (1 - RecoveryRate);
 K_strike    = 0.0221;       % Fixed strike rate of the underlying swap
 
 % Calibrated Hull-White parameters (from Point 5)
-%a_param     = ;       % Mean reversion speed
-%sigma_param = ;      % Volatility of the short rate
+a_param     = 0.02;       % Mean reversion speed
+sigma_param = 1e-8;      % Volatility of the short rate
 
 % Discretization levels (Time steps per year)
 precision_levels = [1, 4, 12, 52, 365]; 
@@ -106,16 +106,17 @@ fig300 = plot_hw_convergence(result_CDS_300, a_param, sigma_param, 300);
 fig500 = plot_hw_convergence(result_CDS_500, a_param, sigma_param, 500);
 % 
 % % Error Analysis (Tree vs. Analytical)
-% 
 % % Analytical results from point 2 and 3
-% analytical_npv_RiskFree = npvCorporate;     % from point 2     
-% analytical_cva_300 = cva_300;               % from point 3
-% analytical_cva_500 = cva_500;               % from point 3
+% analytical_npv_RiskFree = NPV_riskfree;     % from point 2     
+% analytical_cva_300 = Total_CVA(1);               % from point 3
+% analytical_cva_500 = Total_CVA(2);               % from point 3
 % 
 % % Compute and print error tables
 % disp('--> Error Metrics for CDS 300 bps:');
-% error_table_300 = display_error_table(npv_RiskFree, cva_300, resultCDS_300);
+% error_table_300 = display_error_table(analytical_npv_RiskFree, analytical_cva_300, result_CDS_300);
 % 
 % disp('--> Error Metrics for CDS 500 bps:');
-% error_table_500 = display_error_table(npv_RiskFree, cva_500, struct_CDS_500);
+% error_table_500 = display_error_table(analytical_npv_RiskFree, analytical_cva_500, result_CDS_500);
+% 
+
 
