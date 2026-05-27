@@ -28,7 +28,7 @@ settlement = datenum("28-Jun-2022");
 
 scheduleSwap = read_amortizing_plan('SwapAmortizingPlan_v1', 'SwapPlan');
 
-vol_matrix = read_vol_matrix_data("20220626_vol_matrix.xlsx", settlement);
+vol_data = read_vol_matrix_data("20220626_vol_matrix.xlsx", settlement);
 
 
 %% 1) Multi-Curve Bootstrap
@@ -98,10 +98,13 @@ NPV_with_CVA_500 = NPV_RF - CVA_500;
 
 %% 5) Multi-Curve Swaption Model
 
-diag_expiries = [1, 3, 5, 8, 10, 12, 15]; 
-diag_tenors = [15, 12, 10, 7, 5, 3, 1];
+% Define diagonals and gamma values
+diag_expiries = [1; 3; 5; 8; 10; 12; 15]; 
+diag_tenors = [15; 12; 10; 7; 5; 3; 1];
+gammas = [0; 0.5; 1];
 
-calibrate_multicurve_swaption_model(settlement, discountCurve, pseudoCurve, vol_data, diag_expiries, diag_tenors);
+% Calibrate MHW parameters (with constant parameters and piecewise constant gamma) 
+[results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaption_model(settlement, discountCurve, pseudoCurve, vol_data, diag_expiries, diag_tenors, gammas);
 
 %% Point 6: Hull-White Tree Pricing, Convergence, and Error Analysis
 
