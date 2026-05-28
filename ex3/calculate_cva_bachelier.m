@@ -22,8 +22,8 @@ function [CVA, EE_profile] = calculate_cva_bachelier(settlement, scheduleSwap, s
     %   EE_profile     - Vector of Expected Exposures at each payment date
     
     % --- Date vector and time to expiry calculation (T_i) ---
-    payDates_num = datenum(scheduleSwap.payDates);
-    T_exp = yearfrac(settlement, payDates_num, 3); % ACT/365
+    payDates = scheduleSwap.payDates;
+    T_exp = yearfrac(settlement, payDates, 3); % ACT/365
     
     % --- Vectorized Survival and Default Probabilities ---
     SP = exp(-hazardRate * T_exp);

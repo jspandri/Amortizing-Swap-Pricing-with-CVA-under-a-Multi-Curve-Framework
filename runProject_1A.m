@@ -107,7 +107,7 @@ gammas = [0; 0.5; 1];
 % Calibrate MHW parameters (with constant parameters and piecewise constant gamma) 
 [results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaption_model(settlement_22, discountCurve_22, pseudoCurve_22, vol_data_22, diag_expiries, diag_tenors, gammas);
 
-%% Point 6: Hull-White Tree Pricing
+%% 6) Hull-White Tree Pricing
 
 % Calibrated Hull-White parameters (from Point 5)
 a_param             = results_const(1).a;      % Mean reversion speed

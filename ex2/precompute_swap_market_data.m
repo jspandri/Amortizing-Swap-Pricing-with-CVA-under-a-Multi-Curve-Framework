@@ -1,30 +1,26 @@
-function swapMarketData = precompute_swap_market_data(settlement, scheduleSwap, estCurv, euliborCurv)
+function swapMarketData = precompute_swap_market_data(settlement, scheduleSwap, estrCurve, euriborCurve)
     
-    % Ensure swap dates are in datenum format
-    startDates = datenum(scheduleSwap.accrualStart);
-    endDates   = datenum(scheduleSwap.accrualEnd);
-    payDates   = datenum(scheduleSwap.payDates);
-    deltas     = scheduleSwap.delta;
+% Ensure swap dates are in datenum format
+startDates = scheduleSwap.accrualStart;
+endDates   = scheduleSwap.accrualEnd;
+payDates   = scheduleSwap.payDates;
+deltas     = scheduleSwap.delta;
+
+% Store the exact payment dates in the output struct
+swapMarketData.payDates = payDates;
+
+% Pre-calculate OIS discounts on the EXACT payment dates
+swapMarketData.B_ois = get_discount_factor_by_zero_rates_linear_interp(...
+    settlement, payDates, estrCurve.dates, estrCurve.discounts);
     
-    % Store the exact payment dates in the output struct
-    swapMarketData.payDates = payDates;
+% Pre-calculate Euribor pseudo-discounts on the FIXING DATES
+P_euri_start = get_discount_factor_by_zero_rates_linear_interp(...
+    settlement, startDates, euriborCurve.dates, euriborCurve.discounts);
     
-    % --- EURIBOR FIXING DATES (2 BUSINESS DAYS PRIOR) ---
-    fixing_start = shift_2bd_backward(startDates);
-    fixing_end   = shift_2bd_backward(endDates);
+P_euri_end = get_discount_factor_by_zero_rates_linear_interp(...
+    settlement, endDates, euriborCurve.dates, euriborCurve.discounts);
     
-    % Pre-calculate OIS discounts on the EXACT payment dates
-    swapMarketData.B_ois = get_discount_factor_by_zero_rates_linear_interp(...
-        settlement, payDates, estCurv.dates, estCurv.discounts);
-        
-    % Pre-calculate Euribor pseudo-discounts on the FIXING DATES
-    P_euri_start = get_discount_factor_by_zero_rates_linear_interp(...
-        settlement, fixing_start, euliborCurv.dates, euliborCurv.discounts);
-        
-    P_euri_end = get_discount_factor_by_zero_rates_linear_interp(...
-        settlement, fixing_end, euliborCurv.dates, euliborCurv.discounts);
-        
-    %  Calculate exact Forward Rates using the Fixing-shifted pseudo-discounts
-    swapMarketData.F_forward = (1 ./ deltas) .* (P_euri_start ./ P_euri_end - 1);
+%  Calculate exact Forward Rates using the Fixing-shifted pseudo-discounts
+swapMarketData.F_forward = (1 ./ deltas) .* (P_euri_start ./ P_euri_end - 1);
     
 end

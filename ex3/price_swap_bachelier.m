@@ -28,7 +28,7 @@ function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_s
     notionals    = scheduleSwap.notionals;
     P_ois        = swapMarketData.B_ois;
     F_fwd        = swapMarketData.F_forward;
-    payDates_num = datenum(scheduleSwap.payDates);
+    payDates_num = scheduleSwap.payDates;
     
     % --- Standalone cash flows for each single period ---
     cf_fixed = notionals .* deltas .* P_ois;
