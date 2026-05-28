@@ -48,30 +48,27 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
     
     % 2. FORWARD RATES COMPUTATION
     
-    % We compute the Forward rates from the second one by using fixing dates
-    % Interpolate pseudo-discounts at fixing start dates
+    % Interpolate pseudo-discounts at fixing start dates from the secon one
     P_start = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
         scheduleSwap.fixingStart(2:end), pseudoCurve.dates, pseudoCurve.discounts);
 
     % Interpolate pseudo-discounts at period fixing end dates
     P_end   = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
-        scheduleSwap.fixingEnd(2:end), pseudoCurve.dates, pseudoCurve.discounts);
+        scheduleSwap.fixingEnd, pseudoCurve.dates, pseudoCurve.discounts);
 
-    % Compute Forward Rates between fixing dates
-    F_forward = (1 ./ scheduleSwap.yf_float(2:end)) .* ((P_start ./ P_end) - 1);
+    % Compute Forward Rates between fixing dates (from the second one)
+    F_forward = (1 ./ scheduleSwap.yf_float(2:end)) .* ((P_start ./ P_end(2:end)) - 1);
 
     % 3. PAST FIXING OVERWRITE
     % Check if the first active period is a running non-integer period (accrual start is in the past)
     if has_past_fixing && scheduleSwap.accrualStart(1) < settlement
         % Overwrite the first active forward rate with the historical known fixing rate
-        F_forward = [past_fixing_rate;F_forward]; 
+        F_forward = [past_fixing_rate; F_forward]; 
     else
         % The first Forward rate is computed by using the first accrual date (= settlement) and 
         % the first fixing end date since the first fixing start date is before settlement
         P_accr_start = 1;
-        P_fix_end = get_discount_factor_by_zero_rates_linear_interp(settlement,...
-            scheduleSwap.fixingEnd(1), pseudoCurve.dates, pseudoCurve.discounts);
-        yf_stub = yearfrac(settlement, scheduleSwap.fixingEnd(1), 2);
+        yf_stub = yearfrac(settlement, scheduleSwap.fixingEnd(1), 2); %(ACT/360)
         F_fwd_1 = 1/yf_stub * (P_accr_start / P_fix_end - 1);
     
         F_forward = [F_fwd_1; F_forward];

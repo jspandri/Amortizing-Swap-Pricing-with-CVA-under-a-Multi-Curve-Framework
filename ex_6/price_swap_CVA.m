@@ -109,11 +109,14 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
     B0_T_pay = get_discount_factor_by_zero_rates_linear_interp(...
                 start_date, payment_dates, ois_dates, ois_discounts);
             
-    % Precompute OIS market discount factors evaluated exactly at the start of each fixing period
+    % Precompute OIS market discount factors evaluated exactly at the start from the second fixing period
     B0_fix_start = get_discount_factor_by_zero_rates_linear_interp(...
-                start_date, fixing_start, ois_dates, ois_discounts);
+                start_date, fixing_start(2:end), ois_dates, ois_discounts);
+    % The first discount is computed by using the first accrual date (= settlement) 
+    % since the first fixing start date is before settlement
+    B0_fix_start = [1; B0_fix_start];
 
-     % Precompute OIS market discount factors evaluated exactly at the end of each fixing period
+    % Precompute OIS market discount factors evaluated exactly at the end of each fixing period
     B0_fix_end = get_discount_factor_by_zero_rates_linear_interp(...
                 start_date, fixing_end, ois_dates, ois_discounts); 
 

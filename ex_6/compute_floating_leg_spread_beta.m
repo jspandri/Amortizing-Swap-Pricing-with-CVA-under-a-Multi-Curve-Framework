@@ -23,9 +23,15 @@ function floating_leg_spread_beta = compute_floating_leg_spread_beta(...
     eur_discounts = eur_curve.discounts;
     
     % 1. EXTRACT SPOT DISCOUNT FACTORS FROM OIS CURVE (Referenced to t0)
-    % Interpolate market OIS zero rates to get discounts at fixing period starts and ends
+    % Interpolate market OIS zero rates to get discounts at fixing period starts 
+    % (from the second one to avoid past dates) and ends
     B_ois_start = get_discount_factor_by_zero_rates_linear_interp(...
-                    start_date, fixing_start, ois_dates, ois_discounts);
+                    start_date, fixing_start(2:end), ois_dates, ois_discounts);
+    
+    % The first discount is computed by using the first accrual date (= start date) 
+    % since the first fixing start date is before start date
+    B_ois_start = [1; B_ois_start];
+    
     B_ois_end   = get_discount_factor_by_zero_rates_linear_interp(...
                     start_date, fixing_end, ois_dates, ois_discounts);
     
@@ -34,12 +40,17 @@ function floating_leg_spread_beta = compute_floating_leg_spread_beta(...
     B_ois_forward = B_ois_end ./ B_ois_start;
     
     % 2. EXTRACT SPOT DISCOUNT FACTORS FROM EURIBOR CURVE (Referenced to t0)
-    % Interpolate market Euribor zero rates to get spot discounts at fixing period starts and ends
+    % Interpolate market Euribor zero rates to get spot discounts at fixing period starts 
+    % (from the second one to avoid past dates) and ends 
     B_eur_start = get_discount_factor_by_zero_rates_linear_interp(...
-                    start_date, fixing_start, eur_dates, eur_discounts);
+                    start_date, fixing_start(2:end), eur_dates, eur_discounts);
     B_eur_end   = get_discount_factor_by_zero_rates_linear_interp(...
                     start_date, fixing_end, eur_dates, eur_discounts);
-    
+
+    % The first discount is computed by using the first accrual date (= start date) 
+    % since the first fixing start date is before start date
+    B_eur_start = [1; B_eur_start];
+        
     % Compute the Euribor Market Forward discount: 
     % P^F(t0; T_start, T_end) = P^F(t0, T_end) / P^F(t0, T_start)
     B_eur_forward = B_eur_end ./ B_eur_start;

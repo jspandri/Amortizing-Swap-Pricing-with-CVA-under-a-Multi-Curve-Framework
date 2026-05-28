@@ -83,6 +83,13 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, ...
         T_s = fixing_start(idx_float);
         T_e = fixing_end(idx_float);
         T_pay = payment_dates(idx_float);
+
+        % If processing the first coupon, force the stochastic pricing 
+        % interval to start from 'start_date' rather than a date in the past
+        is_first_period = (idx_float == 1);
+        if any(is_first_period)
+            T_s(is_first_period) = start_date;
+        end
         
         % Extract precomputed market discounts for these dates
         B0_T_s = B0_fix_start(idx_float);
@@ -99,8 +106,16 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, ...
         B_curr_T_pay = compute_hw_zcb(x_grid, t_curr, T_pay, a, sigma, ...
                             B0_t_curr, B0_pay, start_date);
        
-        % Calculate the floating leg cash flow: 
-        float_flows = notional_amortized(idx_float)' .* (yf_pay(idx_float) ./ yf_float(idx_float))' .* ...
+        % Dynamically handle the stub period if the current index is the first coupon
+        current_yf_float = yf_float(idx_float);
+        if any(is_first_period)
+            % Compute the year fraction from settlement to fixingEnd(1) (ACT/360)
+            yf_stub = yearfrac(start_date, scheduleSwap.fixingEnd(1), 2);
+            current_yf_float(is_first_period) = yf_stub;
+        end
+        
+        % Calculate the floating leg cash flow
+        float_flows = notional_amortized(idx_float)' .* (yf_pay(idx_float) ./ current_yf_float)' .* ...
               (beta_vec(idx_float)' .* (B_curr_start ./ B_curr_end) - 1) .* B_curr_T_pay;
         
         % Update the swap value V: subtract the floating payment (since we pay the floating leg)
