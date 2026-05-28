@@ -26,7 +26,7 @@ settlement_22 = datewrkdy(trade_date_22, 3); % Find settlement date (+2BD,
 % Volatility matrix data
 vol_data_22 = read_vol_matrix_data("20220626_vol_matrix.xlsx");
 % Swap amortizing plan
-scheduleSwap_22 = read_amortizing_plan('SwapAmortizingPlan_v1', 'SwapPlan');
+scheduleSwap_22 = read_amortizing_plan('SwapAmortizingPlan_v1');
 
 
 % 2023 Data ---------------------------------------------------------------
@@ -40,16 +40,18 @@ vol_data_23 = read_vol_matrix_data("20230131_vol_matrix.xlsx");
 
 %% 1) Multi-Curve Bootstrap
 
+% Bootstrap discount (OIS ESTR) and pseudo-discount (Euribor3m) curves
 [discountCurve_22, pseudoCurve_22] = multi_curve_bootstrap(euriborSet_22, estrSet_22);
 
-%% Point 2-- Risk Free Amortizing Swap Pricing--
-K_strike    = 0.0221; 
+%% 2) Risk Free Amortizing Swap Pricing
+
+K_strike = 0.0221; 
 swapMarketData = precompute_swap_market_data(settlement_22, scheduleSwap_22, discountCurve_22, pseudoCurve_22);
 [NPV_riskfree, PV_fixed, PV_float] = swap_riskfree_npv(scheduleSwap_22, swapMarketData, K_strike);
 
-%% Point 3--Amortizing Swap Pricing with CVA: simplified approach--
+%% 3) Amortizing Swap Pricing with CVA
 
-RecoveryRate               = 0.4;
+RecoveryRate               = 0.6;
 CDS_spreads                = [300; 500] * 1e-4; % 300 bps and 500 bps
 HazardRates                = CDS_spreads / (1 - RecoveryRate);
 NPV = zeros(1,2);
@@ -63,7 +65,7 @@ for i= 1:2
 end
 plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
 
-%% Point 4 -- Unwinding
+%% 4) Unwinding
 
 maturity_date_not_adjusted = datenum("28-Jun-2037");
 notional_amortized = scheduleSwap_22.notionals; 
@@ -108,6 +110,7 @@ gammas = [0; 0.5; 1];
 [results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaption_model(settlement_22, discountCurve_22, pseudoCurve_22, vol_data_22, diag_expiries, diag_tenors, gammas);
 
 %% 6) Hull-White Tree Pricing
+
 
 % Calibrated Hull-White parameters (from Point 5)
 a_param             = results_const(1).a;      % Mean reversion speed
