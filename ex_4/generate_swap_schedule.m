@@ -1,7 +1,7 @@
 function scheduleSwap = generate_swap_schedule(settlement, original_start_date, ...
     maturity_date_unadj, notional_amortized)
-% GENERATE_SWAP_SCHEDULE Generates the payment and fixing schedule, the year 
-% fractions between payment dates and fixing dates and notionals for an IRS.
+% GENERATE_SWAP_SCHEDULE Generates the payment and fixing schedule, the year
+% fractions between fixing dates, payment periods, and notionals for an IRS.
 %
 % INPUTS:
 %   settlement          : [Scalar] Settlement date (datenum).

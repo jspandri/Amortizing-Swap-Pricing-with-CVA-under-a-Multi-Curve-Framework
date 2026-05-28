@@ -12,10 +12,7 @@ close all;
 clc;
 
 addpath("utilities\")
-addpath("data\")
-addpath("ex3\")
-addpath("ex2\")
-addpath("ex_4\")
+addpath("data\","ex2\","ex3\","ex_4\","ex_6\")
 
 %% Read data
 
@@ -110,49 +107,21 @@ gammas = [0; 0.5; 1];
 % Calibrate MHW parameters (with constant parameters and piecewise constant gamma) 
 [results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaption_model(settlement_22, discountCurve_22, pseudoCurve_22, vol_data_22, diag_expiries, diag_tenors, gammas);
 
-%% Point 6: Hull-White Tree Pricing, Convergence, and Error Analysis
+%% Point 6: Hull-White Tree Pricing
 
 % Calibrated Hull-White parameters (from Point 5)
-a_param     = results_const(1).a;       % Mean reversion speed
-sigma_param = results_const(1).sigma;      % Volatility of the short rate
+a_param             = results_const(1).a;      % Mean reversion speed
+sigma_const         = results_const(1).sigma;  % Scalar constant volatility
+sigma_pwc           = results_pwc(1).sigmas;   % Piecewise Constant volatility
+sigma_times         = diag_expiries;           % Calibration buckets in years
 
 % Discretization levels (Time steps per year)
 precision_levels = [1, 4, 12, 52, 365]; 
 
-% Pricing (CDS 300 bps)
-result_CDS_300 = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_param, K_strike, ...
-    settlement_22, maturity_date_not_adjusted, precision_levels, notional_amortized, ...
-    RecoveryRate, HazardRates(1), discountCurve_22, pseudoCurve_22);
-
-% Pricing (CDS 500 bps)
-result_CDS_500 = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_param, K_strike, ...
-    settlement_22, maturity_date_not_adjusted, precision_levels, notional_amortized, ...
-    RecoveryRate, HazardRates(2), discountCurve_22, pseudoCurve_22);
-
-% Convert results into MATLAB tables and print
-table_CDS_300 = struct2table(result_CDS_300);
-table_CDS_500 = struct2table(result_CDS_500);
-disp('--> Discretization Convergence Table: CDS 300 bps');
-disp(table_CDS_300);
-disp('--> Discretization Convergence Table: CDS 500 bps');
-disp(table_CDS_500);
-
-% Generate plots for visualizing convergence
-fig300 = plot_hw_convergence(result_CDS_300, a_param, sigma_param, 300);
-fig500 = plot_hw_convergence(result_CDS_500, a_param, sigma_param, 500);
-% 
-% % Error Analysis (Tree vs. Analytical)
-% % Analytical results from point 2 and 3
-% analytical_npv_RiskFree = NPV_riskfree;     % from point 2     
-% analytical_cva_300 = Total_CVA(1);               % from point 3
-% analytical_cva_500 = Total_CVA(2);               % from point 3
-% 
-% % Compute and print error tables
-% disp('--> Error Metrics for CDS 300 bps:');
-% error_table_300 = display_error_table(analytical_npv_RiskFree, analytical_cva_300, result_CDS_300);
-% 
-% disp('--> Error Metrics for CDS 500 bps:');
-% error_table_500 = display_error_table(analytical_npv_RiskFree, analytical_cva_500, result_CDS_500);
-% 
-
-
+% Pricing of an amortizing swap under a multi-curve Hull-White model. We compare 
+% a Constant Volatility calibration vs a Piecewise Constant Volatility calibration 
+% across different discretization grid levels, for two CDS profiles.
+[res_300_const, res_500_const, res_300_pwc, res_500_pwc] = execute_project_point6(...
+    a_param, sigma_const, sigma_pwc, sigma_times, K_strike, settlement_22, ...
+    maturity_date_not_adjusted, precision_levels, notional_amortized, ...
+    RecoveryRate, HazardRates, discountCurve_22, pseudoCurve_22);
