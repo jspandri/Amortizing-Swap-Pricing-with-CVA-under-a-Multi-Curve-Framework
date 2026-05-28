@@ -10,22 +10,18 @@ function comparison_table = display_comparison_table(result_const, result_pwc)
 %   result_pwc   : [Struct] Results structure from the Piecewise Constant HW model.
 %
 % OUTPUTS:
-%   comparison_table : [Table] Formatted MATLAB table showing the absolute differences.
+%   comparison_table : [Table] Formatted MATLAB table showing the differences.
 
     % Extract metrics for the highest precision level (last element in the array) for Constant Sigma
     npv_rf_const = result_const.Risk_free_Swap_Price(end);
     cva_const    = result_const.CVA(end);
     npv_risky_const = result_const.Risky_Swap_Price(end);
     
-    
     % Extract metrics for the highest precision level for Piecewise Constant (PWC) Sigma
     npv_rf_pwc = result_pwc.Risk_free_Swap_Price(end);
     cva_pwc    = result_pwc.CVA(end);
     npv_risky_pwc = npv_rf_pwc - cva_pwc;
         
-    % Define the row names for the metrics being compared
-    Metrics = {'NPV Risk Free'; 'CVA'; 'Risky NPV'};
-    
     % Aggregate the column values for Constant Sigma
     Values_Constant_Sigma = [npv_rf_const; cva_const; npv_risky_const];
     
@@ -38,13 +34,18 @@ function comparison_table = display_comparison_table(result_const, result_pwc)
     % Compute relative difference as a percentage
     Rel_Diff_Raw = (Absolute_Difference ./ abs(Values_Constant_Sigma)) * 100;
     
-    % Convert to string array for display
-    Relative_Difference_Pct = strings(3, 1);
+    % Use a cell array first, then convert to 'categorical' for display 
+    rel_diff_cell = cell(3, 1);
     for i = 1:3
-        Relative_Difference_Pct(i) = sprintf('%.2f%%', Rel_Diff_Raw(i));
+        rel_diff_cell{i} = sprintf('%.2f%%', Rel_Diff_Raw(i));
     end
+    Relative_Difference_Pct = categorical(rel_diff_cell);
+    
+    % Define the row names.
+    row_names = {'NPV Risk Free', 'CVA', 'Risky NPV'};
     
     % Build final table
-    comparison_table = table(Metrics, Values_Constant_Sigma, Values_Piecewise_Constant, ...
-                             Absolute_Difference, Relative_Difference_Pct);
+    comparison_table = table(Values_Constant_Sigma, Values_Piecewise_Constant, ...
+                             Absolute_Difference, Relative_Difference_Pct, ...
+                             'RowNames', row_names);
 end
