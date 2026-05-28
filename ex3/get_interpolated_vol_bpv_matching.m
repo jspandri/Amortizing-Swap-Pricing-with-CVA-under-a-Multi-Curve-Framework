@@ -25,7 +25,7 @@ function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date,
         num_quarters = Y * 4; % Assuming standard quarterly payments
         
         % Implicit broadcasting: expands to an (N x num_quarters) matrix of future payment dates
-        pay_dates_bullet_mat = expiry_date + (1:num_quarters) * 91.25;
+        pay_dates_bullet_mat = generate_exact_quarterly_dates(expiry_date, num_quarters);
         
         % Flatten the 2D date matrix into a 1D vector using (:) to query the curve 
         % interpolation function in a single, high-performance vectorized call.
