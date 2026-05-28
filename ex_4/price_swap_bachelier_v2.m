@@ -60,22 +60,22 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
     % Compute Forward Rates between fixing dates
     F_forward = (1 ./ scheduleSwap.yf_float(2:end)) .* ((P_start ./ P_end) - 1);
 
-    % The first Forward rate is computed by using the first accrual date and 
-    % the first fixing end date since the first fixing start date is before settlement
-    P_accr_start = get_discount_factor_by_zero_rates_linear_interp(settlement,...
-        scheduleSwap.accrualStart(1), pseudoCurve.dates, pseudoCurve.discounts); 
-    P_fix_end = get_discount_factor_by_zero_rates_linear_interp(settlement,...
-        scheduleSwap.fixingEnd(1), pseudoCurve.dates, pseudoCurve.discounts);
-    yf_stub = yearfrac(settlement, scheduleSwap.fixingEnd(1), 2);
-    F_fwd_1 = 1/yf_stub * (P_accr_start / P_fix_end - 1);
-
-    F_forward = [F_fwd_1; F_forward];
-       
     % 3. PAST FIXING OVERWRITE
     % Check if the first active period is a running non-integer period (accrual start is in the past)
     if has_past_fixing && scheduleSwap.accrualStart(1) < settlement
         % Overwrite the first active forward rate with the historical known fixing rate
-        F_forward(1) = past_fixing_rate;
+        F_forward = [past_fixing_rate;F_forward]; 
+    else
+        % The first Forward rate is computed by using the first accrual date and 
+        % the first fixing end date since the first fixing start date is before settlement
+        P_accr_start = get_discount_factor_by_zero_rates_linear_interp(settlement,...
+            scheduleSwap.accrualStart(1), pseudoCurve.dates, pseudoCurve.discounts); 
+        P_fix_end = get_discount_factor_by_zero_rates_linear_interp(settlement,...
+            scheduleSwap.fixingEnd(1), pseudoCurve.dates, pseudoCurve.discounts);
+        yf_stub = yearfrac(settlement, scheduleSwap.fixingEnd(1), 2);
+        F_fwd_1 = 1/yf_stub * (P_accr_start / P_fix_end - 1);
+    
+        F_forward = [F_fwd_1; F_forward];
     end
     
     % 4. PV PROFILES FOR BOTH LEGS
