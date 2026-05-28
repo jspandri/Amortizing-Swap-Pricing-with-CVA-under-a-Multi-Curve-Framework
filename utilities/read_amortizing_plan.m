@@ -1,32 +1,18 @@
-function swapSchedule = read_amortizing_plan(filename, sheetName)
+function swapSchedule = read_amortizing_plan(filename)
     % READ_AMORTIZING_PLAN Reads the swap amortizing plan from an Excel file
     %   Returns a struct containing dates, year fractions, and notionals.
     
-    % If the sheet is not specified, use the first one by default
-    if nargin < 2
-        sheets = sheetnames(filename);
-        sheetName = sheets(1); 
-    end
     
     % Reads the table preserving the original column names (including spaces)
-    data = readtable(filename, 'Sheet', sheetName, 'VariableNamingRule', 'preserve');
+    data = readtable(filename, 'VariableNamingRule', 'preserve');
     
     % Payment Dates Extraction
-    % 'readtable' usually converts to 'datetime' automatically. If not, force the conversion.
-    if isdatetime(data.("Pay Date"))
-        swapSchedule.payDates = data.("Pay Date");
-    else
-        swapSchedule.payDates = datetime(data.("Pay Date"));
-    end
+    swapSchedule.payDates = datenum(data.("Pay Date"));
+   
     
     % Extract accrual start and end dates (useful for future calculations)
-    if isdatetime(data.("Accrual Start"))
-        swapSchedule.accrualStart = data.("Accrual Start");
-        swapSchedule.accrualEnd = data.("Accrual End");
-    else
-        swapSchedule.accrualStart = datetime(data.("Accrual Start"));
-        swapSchedule.accrualEnd = datetime(data.("Accrual End"));
-    end
+    swapSchedule.accrualStart = datenum(data.("Accrual Start"));
+    swapSchedule.accrualEnd = datenum(data.("Accrual End"));
     
     % Daycount Extraction and Year Fraction Calculation (Act/360)
     % Directly divide the "Days" column by 360

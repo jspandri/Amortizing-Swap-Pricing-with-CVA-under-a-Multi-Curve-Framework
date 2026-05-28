@@ -4,7 +4,7 @@ function [results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaptio
 % expiries and tenors.
 %
 %   1) Starting from implied volatilities of Swaptions under Bachelier (normal)
-%   model, reconstruncts market prices. 
+%   model, reconstructs market prices. 
 %   2) Calibrates MHW parameters in two scenarios: 
 %       a) Constant parameters
 %       b) Piecewise constant sigma (time dependent)

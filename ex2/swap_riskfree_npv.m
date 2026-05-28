@@ -1,4 +1,4 @@
-function [npvCorporate, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv(scheduleSwap, swapMarketData, K)
+function [npvBank, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv(scheduleSwap, swapMarketData, K)
     % SWAP_RISKFREE_NPV_FAST Calculates the Risk-Free NPV of an amortizing IRS
     % using pre-computed market data (discounts and forward rates).
     %
@@ -8,7 +8,7 @@ function [npvCorporate, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv(scheduleSw
     %   K              - Fixed strike rate (e.g., 0.0221)
     %
     % Outputs:
-    %   npvCorporate - Net NPV from the Corporate's perspective (Rec Fix, Pay Float)
+    %   npvBank      - Net NPV from the bank's perspective (Rec Float, Pay Fix)
     %   npvFixedLeg  - Present Value of the Fixed Leg
     %   npvFloatLeg  - Present Value of the Floating Leg
 
@@ -27,6 +27,6 @@ function [npvCorporate, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv(scheduleSw
     npvFixedLeg = sum(cf_fixed .* B_ois);
     npvFloatLeg = sum(cf_float .* B_ois);
     
-    % NET NPV (Corporate perspective)
-    npvCorporate = npvFixedLeg - npvFloatLeg;
+    % NET NPV (Bank perspective)
+    npvBank = npvFloatLeg - npvFixedLeg;
 end
