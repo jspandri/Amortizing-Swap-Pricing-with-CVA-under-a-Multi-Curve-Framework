@@ -1,5 +1,5 @@
 function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(...
-    settlement, scheduleSwap, K, discountCurve, pseudoCurve, volData, past_fixing_rate)
+    settlement, scheduleSwap, T_exp, K, discountCurve, pseudoCurve, volData, past_fixing_rate)
 % PRICE_SWAP_BACHELIER_V2 Computes Expected Exposure profile of a swap using Bachelier Model.
 %
 % This function also calculates the residual Basis Point Value (BPV), forward 
@@ -17,6 +17,7 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
 %                           - .notionals    : Active outstanding amortizing notionals
 %                           - .yf_float     : Year fractions between fixing dates (ACT/360)
 %                           - .yf_pay       : Year fractions for payment periods (ACT/360)
+%   T_exp               : [Scalar] Time-to-expiry from settlement to each payment date (ACT/365)
 %   K                   : [Scalar] Fixed leg strike swap rate.
 %   discountCurve       : [Struct] ESTR OIS discounting curve data (.dates, .discounts).
 %   pseudoCurve         : [Struct] Euribor 3M forward pseudo curve data (.dates, .discounts).
@@ -46,17 +47,29 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
         scheduleSwap.payDates, discountCurve.dates, discountCurve.discounts);
     
     % 2. FORWARD RATES COMPUTATION
-
+    
+    % We compute the Forward rates from the second one by using fixing dates
     % Interpolate pseudo-discounts at fixing start dates
     P_start = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
-        scheduleSwap.fixingStart, pseudoCurve.dates, pseudoCurve.discounts);
-    
+        scheduleSwap.fixingStart(2:end), pseudoCurve.dates, pseudoCurve.discounts);
+
     % Interpolate pseudo-discounts at period fixing end dates
     P_end   = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
-        scheduleSwap.fixingEnd, pseudoCurve.dates, pseudoCurve.discounts);
-    
+        scheduleSwap.fixingEnd(2:end), pseudoCurve.dates, pseudoCurve.discounts);
+
     % Compute Forward Rates between fixing dates
-    F_forward = (1 ./ scheduleSwap.yf_float) .* ((P_start ./ P_end) - 1);
+    F_forward = (1 ./ scheduleSwap.yf_float(2:end)) .* ((P_start ./ P_end) - 1);
+
+    % The first Forward rate is computed by using the first accrual date and 
+    % the first fixing end date since the first fixing start date is before settlement
+    P_accr_start = get_discount_factor_by_zero_rates_linear_interp(settlement,...
+        scheduleSwap.accrualStart(1), pseudoCurve.dates, pseudoCurve.discounts); 
+    P_fix_end = get_discount_factor_by_zero_rates_linear_interp(settlement,...
+        scheduleSwap.fixingEnd(1), pseudoCurve.dates, pseudoCurve.discounts);
+    yf_stub = yearfrac(settlement, scheduleSwap.fixingEnd(1), 2);
+    F_fwd_1 = 1/yf_stub * (P_accr_start / P_fix_end - 1);
+
+    F_forward = [F_fwd_1; F_forward];
        
     % 3. PAST FIXING OVERWRITE
     % Check if the first active period is a running non-integer period (accrual start is in the past)
@@ -72,16 +85,18 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
     % 5. CUMULATIVE RESIDUAL VALUES
 
     % Compute remaining BPV vector using fast reverse cumulative sum matrix operations
-    BPV_iw_profile = flip(cumsum(flip(pv_bpv_leg)));
+    BPV_full = flip(cumsum(flip(pv_bpv_leg)));
     
     % Compute remaining variable PV vector using fast reverse cumulative sum operations
-    float_residuo  = flip(cumsum(flip(pv_float_leg)));
+    PV_float_full  = flip(cumsum(flip(pv_float_leg)));
+
+    % Since default occurs at t_i, the replacement swap covers cash flows 
+    % from i+1 to maturity. We shift the arrays and append 0 for the last node.
+    BPV_iw_profile = [ BPV_full(2:end); 0];
+    float_leg_pv   = [PV_float_full(2:end); 0];
     
     % 6. TIME TO EXPIRY AND SWAP RATES
 
-    % Compute continuous time-to-expiry from settlement using ACT/365 convention on fixing start dates
-    T_exp = yearfrac(settlement, scheduleSwap.fixingStart, 3);
-    
     % Initialize vector for forward swap rates of residual structures
     S_iw_profile = zeros(numPeriods, 1);
     
@@ -89,7 +104,7 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
     valid_bpv_mask = BPV_iw_profile > 0;
     
     % Calculate swap rates by dividing floating PV by BPV profiles
-    S_iw_profile(valid_bpv_mask) = float_residuo(valid_bpv_mask) ./ BPV_iw_profile(valid_bpv_mask);
+    S_iw_profile(valid_bpv_mask) = float_leg_pv(valid_bpv_mask) ./ BPV_iw_profile(valid_bpv_mask);
     
     % 7. VOLATILITY MAPPING
 

@@ -33,16 +33,16 @@ function [npvCorporate, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv_v2(...
     B_ois = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
         scheduleSwap.payDates, discountCurve.dates, discountCurve.discounts);
     
-    % Interpolate pseudo-discounts at fixing start dates
+    % Interpolate pseudo-discounts at accrual start dates
     P_start = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
-        scheduleSwap.fixingStart, pseudoCurve.dates, pseudoCurve.discounts);
+        scheduleSwap.accrualStart, pseudoCurve.dates, pseudoCurve.discounts);
     
-    % Interpolate pseudo-discounts at period fixing end dates
+    % Interpolate pseudo-discounts at accrual end dates
     P_end   = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
-        scheduleSwap.fixingEnd, pseudoCurve.dates, pseudoCurve.discounts);
+        scheduleSwap.accrualEnd , pseudoCurve.dates, pseudoCurve.discounts);
     
-    % Compute Forward Rates between fixing dates
-    F_forward = (1 ./ scheduleSwap.yf_float) .* ((P_start ./ P_end) - 1);
+    % Compute Forward Rates between accrual/payment dates
+    F_forward = (1 ./ scheduleSwap.yf_pay) .* ((P_start ./ P_end) - 1);
     
     % Check if the first active period is a running non-integer period (accrual start is in the past)
     if has_past_fixing && scheduleSwap.accrualStart(1) < settlement

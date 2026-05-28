@@ -45,7 +45,7 @@ function [CVA, EE_profile] = calculate_cva_bachelier_v2(settlement,scheduleSwap,
     PD = SP_prev - SP;
     
     % 2. EXPECTED EXPOSURE PRICING
-    [EE_profile, ~, ~] = price_swap_bachelier_v2(settlement, scheduleSwap, ...
+    [EE_profile, ~, ~] = price_swap_bachelier_v2(settlement, scheduleSwap, T_pay, ...
         K, discountCurve, pseudoCurve, volData, past_fixing_rate);
     
     % 3. CVA CALCULATION
