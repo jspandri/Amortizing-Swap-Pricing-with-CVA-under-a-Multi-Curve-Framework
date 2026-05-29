@@ -33,7 +33,12 @@ function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date,
             settlement, pay_dates_bullet_mat(:), estCurv.dates, estCurv.discounts);
             
         P_bullet_mat = reshape(P_bullet_vec, N, num_quarters);
-        bullet_BPVs(:, j) = sum(0.25 * P_bullet_mat, 2);
+        
+        full_dates_mat = [expiry_date, pay_dates_bullet_mat];
+        exact_deltas = yearfrac(full_dates_mat(:, 1:end-1), full_dates_mat(:, 2:end), 3); % ACT/365
+        
+        % Aggregate the discounted cash flows to get the exact bullet BPV matrix
+        bullet_BPVs(:, j) = sum(exact_deltas .* P_bullet_mat, 2);
     end
     
     % --- Risk Mapping: Target BPV -> Equivalent Bullet Tenor ---
