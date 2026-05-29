@@ -23,17 +23,16 @@ function [CVA, EE_profile] = calculate_cva_bachelier(settlement, scheduleSwap, s
     
     % --- Date vector and time to expiry calculation (T_i) ---
     payDates = scheduleSwap.payDates;
-    T_exp = yearfrac(settlement, payDates, 3); % ACT/365
-    
+    T_default = yearfrac(settlement, payDates, 3);
     % --- Vectorized Survival and Default Probabilities ---
-    SP = exp(-hazardRate * T_exp);
+    SP = exp(-hazardRate * T_default);
     SP_prev = [1; SP(1:end-1)]; % Forward shift to obtain SP_{i-1}
     PD = SP_prev - SP;          % Marginal Probability of Default for each node
     
     % --- EXPECTED EXPOSURE CALCULATION (Single vectorized call) ---
     % The pricing function returns the entire time profile at once!
     [EE_profile, ~, ~, ~] = price_swap_bachelier(...
-        settlement, scheduleSwap, swapMarketData, volData, K, estCurv, T_exp);
+        settlement, scheduleSwap, swapMarketData, volData, K, estCurv);
         
     % --- CVA ACCUMULATION (Dot product of the vectors) ---
     % Expected Exposure * Marginal PD * Loss Given Default

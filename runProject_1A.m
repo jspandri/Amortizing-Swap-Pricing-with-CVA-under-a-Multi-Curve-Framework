@@ -48,7 +48,8 @@ vol_data_23 = read_vol_matrix_data("20230131_vol_matrix.xlsx");
 K_strike = 0.0221; 
 swapMarketData = precompute_swap_market_data(settlement_22, scheduleSwap_22, discountCurve_22, pseudoCurve_22);
 [NPV_riskfree, PV_fixed, PV_float] = swap_riskfree_npv(scheduleSwap_22, swapMarketData, K_strike);
-
+% check dates (controllo date lascaire per ora) 
+mio_vettore_datetime = datetime(swapMarketData.payDates, 'ConvertFrom', 'datenum');
 %% 3) Amortizing Swap Pricing with CVA
 
 RecoveryRate               = 0.6;

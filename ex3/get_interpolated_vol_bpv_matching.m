@@ -19,7 +19,7 @@ function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date,
     num_tenors = length(tenors);
     bullet_BPVs = zeros(N, num_tenors);
     
-    % --- Benchmark Bullet BPV Calculation ---
+    % Benchmark Bullet BPV Calculation 
     for j = 1:num_tenors
         Y = tenors(j);
         num_quarters = Y * 4; % Assuming standard quarterly payments
@@ -33,7 +33,7 @@ function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date,
             settlement, pay_dates_bullet_mat(:), estCurv.dates, estCurv.discounts);
             
         P_bullet_mat = reshape(P_bullet_vec, N, num_quarters);
-        
+
         full_dates_mat = [expiry_date, pay_dates_bullet_mat];
         exact_deltas = yearfrac(full_dates_mat(:, 1:end-1), full_dates_mat(:, 2:end), 3); % ACT/365
         
@@ -41,7 +41,7 @@ function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date,
         bullet_BPVs(:, j) = sum(exact_deltas .* P_bullet_mat, 2);
     end
     
-    % --- Risk Mapping: Target BPV -> Equivalent Bullet Tenor ---
+    % Risk Mapping: Target BPV to Equivalent Bullet Tenor 
     equivalent_tenor = zeros(N, 1);
     valid_idx = target_BPV_norm > 0;
     
@@ -54,11 +54,12 @@ function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date,
     % Clamp mapped tenors within the market grid boundaries to avoid extrapolation errors
     equivalent_tenor = max(min(equivalent_tenor, max(tenors)), min(tenors));
     
-    % --- Time to Expiry Calculation & Boundary Clamping ---
+    % Time to Expiry Calculation & Boundary correction 
     T_exp = yearfrac(settlement, expiry_date, 3);
     T_exp = max(T_exp, min(volData.expiries));
     
-    % ---  Fully Vectorized 2D Volatility Interpolation ---
+    % Fully Vectorized 2D Volatility Interpolation
+    % ( way more efficient compared with a double interp1)
     [TenorGrid, ExpiryGrid] = meshgrid(volData.tenors, volData.expiries);
     vol_interp = interp2(TenorGrid, ExpiryGrid, volData.vol_matrix, equivalent_tenor, T_exp, 'linear');
 end

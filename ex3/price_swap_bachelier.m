@@ -1,4 +1,4 @@
-function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_swap_bachelier(settlement, scheduleSwap, swapMarketData, volData, K, estCurv, T_exp)
+function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_swap_bachelier(settlement, scheduleSwap, swapMarketData, volData, K, estCurv)
     % PRICE_SWAP_BACHELIER Computes the Expected Exposure profile of a swap
     % using a fully vectorized Bachelier (Normal) swaption pricing model.
     %
@@ -23,22 +23,22 @@ function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_s
     
     numPeriods = length(scheduleSwap.payDates);
     
-    % --- Extract full schedule vectors ---
+    % Extract full schedule vectors 
     deltas       = scheduleSwap.delta;
     notionals    = scheduleSwap.notionals;
     P_ois        = swapMarketData.B_ois;
     F_fwd        = swapMarketData.F_forward;
     payDates_num = scheduleSwap.payDates;
     
-    % --- Standalone cash flows for each single period ---
+    % cash flows for each single period 
     cf_fixed = notionals .* deltas .* P_ois;
     cf_float = notionals .* F_fwd .* deltas .* P_ois;
     
-    % --- Reverse cumulative sum to obtain the residual PV at each node ---
+    % Reverse cumulative sum to obtain the residual PV at each node 
     BPV_full      = cumsum(cf_fixed, 'reverse');
     PV_float_full = cumsum(cf_float, 'reverse');
     
-    % --- Replacement Swap Shift ---
+    % Replacement Swap Shift 
     % Since default occurs at t_i, the replacement swap covers cash flows 
     % from i+1 to maturity. We shift the arrays and append 0 for the last node.
     BPV_iw_profile = [BPV_full(2:end); 0];
@@ -48,22 +48,26 @@ function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_s
     S_iw_profile = zeros(numPeriods, 1);
     EE_profile   = zeros(numPeriods, 1);
     
-    % --- Forward Swap Rate ---
+    % Forward Swap Rate 
     % Calculated only where residual BPV exists to prevent division by zero (NaN)
     valid_idx = BPV_iw_profile > 0;
     S_iw_profile(valid_idx) = float_leg_pv(valid_idx) ./ BPV_iw_profile(valid_idx);
     
-    % --- Normalized BPV and Exact Volatility Mapping ---
+    % Normalized BPV and Exact Volatility Mapping 
     % Normalize using the starting notional of the forward replacement swap
     N_current = [notionals(2:end); 0]; 
     target_BPV_norm = zeros(numPeriods, 1);
     target_BPV_norm(valid_idx) = BPV_iw_profile(valid_idx) ./ N_current(valid_idx);
     
+    % 2 BD fixing 
+    fixingDates_num = shift_2bd_backward(payDates_num);
+    T_exp= yearfrac(settlement, fixingDates_num, 3);
+
     % Pass the full vectors to the volatility mapping function
     vol_exact_profile = get_interpolated_vol_bpv_matching(...
-        settlement, payDates_num, target_BPV_norm, volData, estCurv);
+        settlement, fixingDates_num, target_BPV_norm, volData, estCurv);
         
-    % --- VECTORIZED BACHELIER PRICING ---
+    % VECTORIZED BACHELIER PRICING
     % Identify indices where standard option pricing formula is strictly valid
     calc_idx = (T_exp > 0) & valid_idx;
     d = zeros(numPeriods, 1);
