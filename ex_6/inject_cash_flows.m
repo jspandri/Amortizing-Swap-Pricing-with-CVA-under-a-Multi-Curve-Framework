@@ -40,7 +40,7 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, ...
     B0_T_pay = scheduleSwap.B_ois;
 
 
-    % 1. FIXED LEG (Added at the node prior to payment)
+    % 1. FIXED LEG (Subtracted at the node prior to payment)
     
     % Identify all indices of fixed payments occurring at the current time step
     idx_fixed = find(node_fixed_pay == step_i);
@@ -68,15 +68,15 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, ...
         
         % Vectorized addition: add the discounted value of all fixed cash flows 
         % to the current node values
-        V = V + B_curr_pay * w_fixed(:);
+        V = V - B_curr_pay * w_fixed(:);
     end
     
-    % 2. FLOATING LEG (Subtracted at the node prior to reset)
+    % 2. FLOATING LEG (Added at the node prior to accrual start)
     
     % Identify all indices of floating leg occurring at the current time step
     idx_float = find(node_float == step_i);
     
-    % Proceed only if there is a floating reset scheduled at this time step
+    % Proceed only if there is a floating accrual start scheduled at this time step
     if ~isempty(idx_float)
         % Extract relevant dates for the floating period (Accrual Start,
         % Accrual End (= Payment))
@@ -99,7 +99,7 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, ...
         float_flows = notional_amortized(idx_float)' .* ...
               (beta_vec(idx_float)' .* B_curr_start - B_curr_T_pay);
         
-        % Update the swap value V: subtract the floating payment (since we pay the floating leg)
-        V = V - sum(float_flows, 2);
+        % Update the swap value V: subtract the floating payment (since we receive the floating leg)
+        V = V + sum(float_flows, 2);
     end
 end

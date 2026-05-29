@@ -68,7 +68,7 @@ plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,
 %% 4) Unwinding
 
 maturity_date_not_adjusted = datenum("28-Jun-2037");
-notional_amortized = scheduleSwap_22.notionals; 
+notional_amortized = scheduleSwap_22.notionals;
 
 % Define the known historical fixing rate for the ongoing period (2.202%)
 past_fixing_rate = 0.02202;
@@ -78,19 +78,18 @@ past_fixing_rate = 0.02202;
 
 % Generate the swap schedule starting from the new settlement date
 scheduleSwap_23 = generate_swap_schedule(settlement_23, settlement_22, ...
-    maturity_date_not_adjusted, notional_amortized);
+    maturity_date_not_adjusted, notional_amortized,discountCurve_23,pseudoCurve_23);
 
 % Compute the Risk-Free Net Present Value (NPV) of the swap at the unwinding date
-NPV_RF = swap_riskfree_npv_v2(settlement_23, scheduleSwap_23, K_strike, ...
-    discountCurve_23, pseudoCurve_23, past_fixing_rate);
+NPV_RF = swap_riskfree_npv_v2(settlement_23, scheduleSwap_23, K_strike, past_fixing_rate);
 
 % Compute CVA and Expected Exposure profile for the 300 bps CDS spread at unwinding
 [CVA_300, EE_300] = calculate_cva_bachelier_v2(settlement_23, scheduleSwap_23, K_strike, ...
-    discountCurve_23, pseudoCurve_23, vol_data_23, HazardRates(1), RecoveryRate, past_fixing_rate);
+    discountCurve_23, vol_data_23, HazardRates(1), RecoveryRate, past_fixing_rate);
 
 % Compute CVA and Expected Exposure profile for the 500 bps CDS spread at unwinding
 [CVA_500, EE_500] = calculate_cva_bachelier_v2(settlement_23, scheduleSwap_23, K_strike, ...
-    discountCurve_23, pseudoCurve_23, vol_data_23, HazardRates(2), RecoveryRate, past_fixing_rate);
+    discountCurve_23, vol_data_23, HazardRates(2), RecoveryRate, past_fixing_rate);
 
 % Plot the Expected Exposure profiles for the unwinding date
 plot_expected_exposures(scheduleSwap_23.payDates, EE_300, EE_500, CDS_spreads);
