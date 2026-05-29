@@ -45,7 +45,7 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA(a, sigma, sigma_tim
     
     % Generate the complete swap schedule
     scheduleSwap = generate_swap_schedule(startDate, startDate, ...
-        maturity_date_not_adjusted, notional_amortized);
+        maturity_date_not_adjusted, notional_amortized, ois_curve, eur_curve);
     
     % Extract payment dates 
     paymentDates = scheduleSwap.payDates;

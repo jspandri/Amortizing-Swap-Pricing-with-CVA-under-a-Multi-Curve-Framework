@@ -21,12 +21,14 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
 %   start_date         : [Scalar] Valuation date (datenum).
 %   ois_curve          : [Struct] OIS curve containing .dates and .discounts.
 %   eur_curve          : [Struct] Euribor curve containing .dates and .discounts.
-%   scheduleSwap        : [Struct] Swap schedule containing:
+%   scheduleSwap        : [Struct] Swap schedule container with active periods:
+%                           - .accrualStart : Period start dates (datenum)
+%                           - .accrualEnd   : Period end dates (datenum)
 %                           - .payDates     : Coupon payment dates (datenum)
-%                           - .fixingStart  : Euribor fixing start dates (2 BD backward)
-%                           - .fixingEnd    : Euribor fixing end dates (2 BD backward)
 %                           - .notionals    : Active outstanding amortizing notionals
 %                           - .yf_pay       : Year fractions for payment periods (ACT/360)
+%                           - .F_forward    : Forward Libor rates
+%                           - .B_ois        : discounts at payments dates
 %   RecoveryRate       : [Scalar] Recovery rate in case of default.
 %   HazardRate         : [Scalar] Constant hazard rate (lambda) for default probability.
 %
@@ -38,8 +40,8 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
     % 0. EXTRACT USEFUL SWAP PARAMETERS
 
     payment_dates = scheduleSwap.payDates;
-    fixing_start  = scheduleSwap.fixingStart;
-    fixing_end  = scheduleSwap.fixingEnd; 
+    accrual_start  = scheduleSwap.accrualStart;
+    accrual_end  = scheduleSwap.accrualEnd;
     yf_pay  = scheduleSwap.yf_pay;
     notional_amortized  = scheduleSwap.notionals;
 
@@ -61,8 +63,8 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
     ois_discounts = ois_curve.discounts; 
     
     % Compute the multi-curve floating leg adjustment factors (beta) using both OIS and Euribor curves
-    beta_vec = compute_floating_leg_spread_beta(start_date, fixing_start, ...
-        fixing_end, ois_curve, eur_curve); 
+    beta_vec = compute_floating_leg_spread_beta(start_date, accrual_start, ...
+        accrual_end, ois_curve, eur_curve); 
     
     % Get the total number of payment periods in the swap schedule
     M_periods = length(payment_dates); 
@@ -70,8 +72,8 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
     % Initialize an array to map each fixed payment date to a specific tree step index
     node_fixed_pay = zeros(M_periods, 1); 
     
-    % Initialize an array to map each floating reset date to a specific tree step index
-    node_float_reset = zeros(M_periods, 1); 
+    % Initialize an array to map each floating payment to a specific tree step index
+    node_float = zeros(M_periods, 1); 
     
     % Loop through the schedule to map cash flow dates to discrete time steps on the tree grid
     for k = 1:M_periods 
@@ -87,16 +89,16 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
             node_fixed_pay(k) = idx; 
         end 
         
-        % Find the last index on the tree grid that is <= the k-th fixing 
-        % date (which is 2 BD before accrual)
-        idx_fix = find(grid_dates <= fixing_start(k), 1, 'last'); 
+        % Find the last index on the tree grid that is <= the k-th accrual 
+        % date
+        idx_fl = find(grid_dates <= accrual_start(k), 1, 'last'); 
         
         % Fallback safety: if no index is found, assign to the first step, 
-        % otherwise use the found fixing index
-        if isempty(idx_fix) 
-            node_float_reset(k) = 1; 
+        % otherwise use the found index
+        if isempty(idx_fl) 
+            node_float(k) = 1; 
         else 
-            node_float_reset(k) = idx_fix; 
+            node_float(k) = idx_fl; 
         end 
     end
     
@@ -104,22 +106,11 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
     % via linear interpolation on zero rates
     B0_grid_dates = get_discount_factor_by_zero_rates_linear_interp(...
                 start_date, grid_dates, ois_dates, ois_discounts);
-                   
-    % Precompute OIS market discount factors evaluated exactly at the payment dates
-    B0_T_pay = get_discount_factor_by_zero_rates_linear_interp(...
-                start_date, payment_dates, ois_dates, ois_discounts);
-            
-    % Precompute OIS market discount factors evaluated exactly at the start from the second fixing period
-    B0_fix_start = get_discount_factor_by_zero_rates_linear_interp(...
-                start_date, fixing_start(2:end), ois_dates, ois_discounts);
-    % The first discount is computed by using the first accrual date (= settlement) 
-    % since the first fixing start date is before settlement
-    B0_fix_start = [1; B0_fix_start];
-
-    % Precompute OIS market discount factors evaluated exactly at the end of each fixing period
-    B0_fix_end = get_discount_factor_by_zero_rates_linear_interp(...
-                start_date, fixing_end, ois_dates, ois_discounts); 
-
+                            
+    % Precompute OIS market discount factors evaluated exactly at the start accrual period
+    B0_acc_start = get_discount_factor_by_zero_rates_linear_interp(...
+                start_date, accrual_start, ois_dates, ois_discounts);
+   
     % 2. INITIALIZE TREE VECTORS AT MATURITY (t = T_max) 
 
     % Initialize the CVA tree vector at maturity to zero (no future exposure left)
@@ -187,8 +178,8 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
         % Inject relevant cash flows (fixed / float) into the V vector if 
         % the current step matches a schedule date
         V = inject_cash_flows(V, i, x_grid, t_curr, start_date, a, sigma_local,...
-            B0_grid_dates(i), node_fixed_pay, node_float_reset, K, scheduleSwap, ...
-            beta_vec, B0_T_pay, B0_fix_start,  B0_fix_end, N_steps);
+            B0_grid_dates(i), node_fixed_pay, node_float, K, scheduleSwap, ...
+            beta_vec, B0_acc_start, N_steps);
         
         % C. CREDIT VALUE ADJUSTMENT (CVA) ACCUMULATION
         
