@@ -97,5 +97,6 @@ function scheduleSwap = generate_swap_schedule(settlement, original_start_date, 
     scheduleSwap.yf_float = yearfrac(scheduleSwap.fixingStart, scheduleSwap.fixingEnd, 2);
     
     % ACT/360 year fractions between accrual starts and payment dates for coupons
-    scheduleSwap.yf_pay = yearfrac(scheduleSwap.accrualStart, scheduleSwap.payDates, 2);
+    scheduleSwap.yf_pay = yearfrac(scheduleSwap.accrualStart(2:end), scheduleSwap.payDates(2:end), 2);
+    scheduleSwap.yf_pay = yearfrac(settlement, scheduleSwap.payDates(1),2);
 end
