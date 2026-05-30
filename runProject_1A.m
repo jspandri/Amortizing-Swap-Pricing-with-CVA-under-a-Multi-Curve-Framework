@@ -26,8 +26,8 @@ settlement_22 = datewrkdy(trade_date_22, 3); % Find settlement date (+2BD,
 % Volatility matrix data
 vol_data_22 = read_vol_matrix_data("20220626_vol_matrix.xlsx");
 % Swap amortizing plan
-ammortizing_data_22= read_amortizing_plan('SwapAmortizingPlan_v1');
-
+%ammortizing_data_22= read_amortizing_plan('SwapAmortizingPlan_v1');
+rawSchedule_Excel = read_amortizing_plan('SwapAmortizingPlan_v1');
 
 % 2023 Data ---------------------------------------------------------------
 trade_date_23 = datenum("31-Jan-2023");
@@ -46,7 +46,8 @@ vol_data_23 = read_vol_matrix_data("20230131_vol_matrix.xlsx");
 %% 2) Risk Free Amortizing Swap Pricing
 
 K_strike = 0.0221; 
-scheduleSwap_22 = generate_swap_schedule_22(settlement_22, ammortizing_data_22, discountCurve_22, pseudoCurve_22);
+%scheduleSwap_22 = generate_swap_schedule_22(settlement_22, ammortizing_data_22, discountCurve_22, pseudoCurve_22);
+scheduleSwap_22 = generate_active_swap_schedule2(settlement_22, rawSchedule_Excel, discountCurve_22, pseudoCurve_22);
 [NPV_riskfree, PV_fixed, PV_float] = swap_riskfree_npv(settlement_22,scheduleSwap_22,K_strike);
 
 %% 3) Amortizing Swap Pricing with CVA
@@ -76,8 +77,9 @@ past_fixing_rate = 0.02202;
 [discountCurve_23, pseudoCurve_23] = multi_curve_bootstrap(euriborSet_23, estrSet_23); 
 
 % Generate the swap schedule starting from the new settlement date
-scheduleSwap_23 = generate_swap_schedule(settlement_23, settlement_22, ...
-    maturity_date_not_adjusted, notional_amortized, discountCurve_23, pseudoCurve_23);
+%scheduleSwap_23 = generate_swap_schedule(settlement_23, settlement_22, ...
+   % maturity_date_not_adjusted, notional_amortized, discountCurve_23, pseudoCurve_23);
+scheduleSwap_23 = generate_active_swap_schedule2(settlement_23, rawSchedule_Excel, discountCurve_23, pseudoCurve_23);
 
 % Compute the Risk-Free Net Present Value (NPV) at the unwinding date
 NPV_RF_23 = swap_riskfree_npv(settlement_23, scheduleSwap_23, K_strike, past_fixing_rate);
