@@ -42,7 +42,8 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
     F_forward = scheduleSwap.F_forward;
 
     % 2 BD fixing 
-    fixingDates = shift_2bd_backward(payDates);
+    %fixingDates = shift_2bd_backward(payDates);
+    fixingDates=datewrkdy(payDates, -3);
     T_exp = yearfrac(settlement, fixingDates, 3);
     
     % INITIALIZATION
