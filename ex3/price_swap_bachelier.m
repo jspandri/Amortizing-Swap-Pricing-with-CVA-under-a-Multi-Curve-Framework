@@ -60,7 +60,7 @@ function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_s
     target_BPV_norm(valid_idx) = BPV_iw_profile(valid_idx) ./ N_current(valid_idx);
     
     % 2 BD fixing 
-    fixingDates_num = shift_2bd_backward(payDates_num);
+    fixingDates_num=datewrkdy(payDates_num, -3);
     T_exp= yearfrac(settlement, fixingDates_num, 3);
 
     % Pass the full vectors to the volatility mapping function
