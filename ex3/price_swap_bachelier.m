@@ -1,4 +1,5 @@
-function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_swap_bachelier(settlement, scheduleSwap, swapMarketData, volData, K, estCurv)
+function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_swap_bachelier(...
+    settlement, scheduleSwap, swapMarketData, volData, K, estCurv)
     % PRICE_SWAP_BACHELIER Computes the Expected Exposure profile of a swap
     % using a fully vectorized Bachelier (Normal) swaption pricing model.
     %
@@ -13,7 +14,6 @@ function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_s
     %   volData        - Struct containing implied volatility surface/matrix
     %   K              - Strike rate for the swaption
     %   estCurv        - Struct containing the OIS zero curve for BPV mapping
-    %   T_exp          - Vector of times to expiry (in years) for each node
     %
     % Outputs:
     %   EE_profile        - Vector of Expected Exposures (Swaption PV) at each node
@@ -44,7 +44,7 @@ function [EE_profile, S_iw_profile, BPV_iw_profile, vol_exact_profile] = price_s
     BPV_iw_profile = [BPV_full(2:end); 0];
     float_leg_pv   = [PV_float_full(2:end); 0];
     
-    % --- Initialize output profiles ---
+    % Initialize output profiles
     S_iw_profile = zeros(numPeriods, 1);
     EE_profile   = zeros(numPeriods, 1);
     

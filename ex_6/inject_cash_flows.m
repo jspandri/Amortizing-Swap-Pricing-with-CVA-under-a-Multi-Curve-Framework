@@ -40,7 +40,7 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, ...
     B0_T_pay = scheduleSwap.B_ois;
 
 
-    % 1. FIXED LEG (Subtracted at the node prior to payment)
+    % 1. FIXED LEG (Subtracted at the node prior or equal to payment date)
     
     % Identify all indices of fixed payments occurring at the current time step
     idx_fixed = find(node_fixed_pay == step_i);
@@ -71,7 +71,7 @@ function V = inject_cash_flows(V, step_i, x_grid, t_curr, start_date, a, ...
         V = V - B_curr_pay * w_fixed(:);
     end
     
-    % 2. FLOATING LEG (Added at the node prior to accrual start)
+    % 2. FLOATING LEG (Added at the node prior or equal to accrual start)
     
     % Identify all indices of floating leg occurring at the current time step
     idx_float = find(node_float == step_i);

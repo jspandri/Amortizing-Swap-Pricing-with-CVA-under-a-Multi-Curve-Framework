@@ -30,13 +30,12 @@ function [CVA, EE_profile] = calculate_cva_bachelier_v2(settlement,scheduleSwap,
 
     % 1. PROBABILITY OF DEFAULT
 
-    % Compute ACT/365 year fractions from settlement to each fixing date
-    % (2BD before the payment dates)
-    fixing_date = datewrkdy(scheduleSwap.payDates, -3); % datewrkdy needs -abs(offset+1)=-3)
-    T_exp = yearfrac(settlement, fixing_date, 3);
-    
+    % Compute ACT/365 year fractions from settlement to each payment date
+    payDates = scheduleSwap.payDates;
+    T_default = yearfrac(settlement, payDates, 3);
+
     % Compute survival probabilities 
-    SP = exp(-hazardRate * T_exp);
+    SP = exp(-hazardRate * T_default);
     
     % Shift survival probabilities array to obtain SP_{i-1}
     SP_prev = [1; SP(1:end-1)];
@@ -45,7 +44,8 @@ function [CVA, EE_profile] = calculate_cva_bachelier_v2(settlement,scheduleSwap,
     PD = SP_prev - SP;
     
     % 2. EXPECTED EXPOSURE PRICING
-    [EE_profile, ~, ~] = price_swap_bachelier_v2(settlement, scheduleSwap, T_exp, ...
+    
+    [EE_profile, ~, ~] = price_swap_bachelier_v2(settlement, scheduleSwap,...
         K, discountCurve, volData, past_fixing_rate);
     
     % 3. CVA CALCULATION

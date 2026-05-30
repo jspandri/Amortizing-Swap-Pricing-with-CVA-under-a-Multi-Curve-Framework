@@ -1,5 +1,5 @@
 function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(...
-    settlement, scheduleSwap, T_exp, K, discountCurve, volData, past_fixing_rate)
+    settlement, scheduleSwap, K, discountCurve, volData, past_fixing_rate)
 % PRICE_SWAP_BACHELIER_V2 Computes Expected Exposure profile of a swap using Bachelier Model.
 %
 % This function also calculates the residual Basis Point Value (BPV), forward 
@@ -16,8 +16,6 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
 %                           - .yf_pay       : Year fractions for payment periods (ACT/360)
 %                           - .F_forward    : Forward Libor rates
 %                           - .B_ois        : discounts at payments dates
-%   T_exp               : [Scalar] Time-to-expiry from settlement to each fixing 
-%                                  date (ACT/365) (2BD before payment dates)
 %   K                   : [Scalar] Fixed leg strike swap rate.
 %   discountCurve       : [Struct] ESTR OIS discounting curve data (.dates, .discounts).
 %   volData             : [Struct] Volatility matrix structure.
@@ -30,7 +28,7 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
 %   BPV_iw_profile : [Vector] Basis Point Value of the residual amortizing legs.
 
     % Check if optional past fixing rate is provided
-    if nargin < 7 || isempty(past_fixing_rate)
+    if nargin < 6 || isempty(past_fixing_rate)
         past_fixing_rate = [];
     end
 
@@ -38,13 +36,18 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
 
     notionals = scheduleSwap.notionals;
     accrualStart = scheduleSwap.accrualStart;
+    payDates = scheduleSwap.payDates;
     yf_pay =  scheduleSwap.yf_pay;
     B_ois = scheduleSwap.B_ois;
     F_forward = scheduleSwap.F_forward;
+
+    % 2 BD fixing 
+    fixingDates = shift_2bd_backward(payDates);
+    T_exp = yearfrac(settlement, fixingDates, 3);
     
     % INITIALIZATION
 
-    numPeriods = length(scheduleSwap.payDates);
+    numPeriods = length(payDates);
     S_iw_profile = zeros(numPeriods, 1); % vector for forward swap rates
     target_BPV_norm = zeros(numPeriods, 1); % vector for normalized BPV
     EE_profile = zeros(numPeriods, 1); % vector for expected exposure
@@ -94,10 +97,10 @@ function [EE_profile, S_iw_profile, BPV_iw_profile] = price_swap_bachelier_v2(..
     
     % Extract mapped Bachelier volatilities
     vol_exact_profile = get_interpolated_vol_bpv_matching(settlement, ...
-        scheduleSwap.payDates, target_BPV_norm, volData, discountCurve);
+       fixingDates, target_BPV_norm, volData, discountCurve);
     
     % BACHELIER EXPOSURE COMPUTATION
-       
+    
     % Isolate active future nodes
     calc_idx = (T_exp > 0) & valid_bpv_mask;
        
