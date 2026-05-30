@@ -7,11 +7,12 @@ payDates   = scheduleSwap.payDates;
 deltas     = scheduleSwap.delta;
 
 % Store the exact payment dates in the output struct
+swapMarketData.accrualStart=startDates;
+swapMarketData.accrualEnd=endDates;
 swapMarketData.payDates = payDates;
+swapMarketData.notionals=scheduleSwap.notionals;
+swapMarketData.deltas=deltas;
 
-% Pre-calculate OIS discounts on the EXACT payment dates
-swapMarketData.B_ois = get_discount_factor_by_zero_rates_linear_interp(...
-    settlement, payDates, estrCurve.dates, estrCurve.discounts);
     
 % Pre-calculate Euribor pseudo-discounts on the FIXING DATES
 P_euri_start = get_discount_factor_by_zero_rates_linear_interp(...
@@ -22,5 +23,9 @@ P_euri_end = get_discount_factor_by_zero_rates_linear_interp(...
     
 %  Calculate exact Forward Rates using the Fixing-shifted pseudo-discounts
 swapMarketData.F_forward = (1 ./ deltas) .* (P_euri_start ./ P_euri_end - 1);
+
+% Pre-calculate OIS discounts on the EXACT payment dates
+swapMarketData.B_ois = get_discount_factor_by_zero_rates_linear_interp(...
+    settlement, payDates, estrCurve.dates, estrCurve.discounts);
     
 end

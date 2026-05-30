@@ -1,41 +1,58 @@
-function [CVA, EE_profile] = calculate_cva_bachelier(settlement, scheduleSwap, swapMarketData, volData, hazardRate, recoveryRate, K, estCurv)
-    % CALCULATE_CVA_BACHELIER Computes the Credit Value Adjustment (CVA) 
-    % for an amortizing swap using a fully vectorized Bachelier pricing model.
-    %
-    % This function calculates the expected exposure and default probabilities 
-    % across all payment nodes simultaneously without the use of for-loops,
-    % ensuring maximum computational efficiency.
-    %
-    % Inputs:
-    %   settlement     - Settlement date (datenum)
-    %   scheduleSwap   - Struct containing the swap amortizing schedule
-    %   swapMarketData - Struct containing pre-calculated market data vectors
-    %                    (e.g., P_ois_pay, F_forward)
-    %   volData        - Struct containing implied volatility surface/matrix
-    %   hazardRate     - Constant intensity of default (lambda), e.g., 0.02
-    %   recoveryRate   - Expected recovery rate (R), e.g., 0.40
-    %   K              - Strike rate for the swaptions
-    %   estCurv        - Struct containing the OIS zero curve for BPV mapping
-    %
-    % Outputs:
-    %   CVA            - Total Credit Value Adjustment (scalar)
-    %   EE_profile     - Vector of Expected Exposures at each payment date
-    
-    % Date vector and time to expiry calculation (T_i)
+function [CVA, EE_profile] = calculate_cva_bachelier_v2(settlement,scheduleSwap, K, ...
+    discountCurve, volData, hazardRate, recoveryRate, past_fixing_rate)
+% CALCULATE_CVA_BACHELIER_V2 Computes the Credit Value Adjustment (CVA) 
+% for an amortizing swap using a Bachelier pricing model.
+%
+% INPUTS:
+%   settlement          : [Scalar] Valuation date (datenum).
+%   scheduleSwap        : [Struct] Swap schedule container with active periods:
+%                           - .accrualStart : Period start dates (datenum)
+%                           - .accrualEnd   : Period end dates (datenum)
+%                           - .payDates     : Coupon payment dates (datenum)
+%                           - .notionals    : Active outstanding amortizing notionals
+%                           - .yf_pay       : Year fractions for payment periods (ACT/360)
+%                           - .F_forward    : Forward Libor rates
+%                           - .B_ois        : discounts at payments dates
+%   K                   : [Scalar] Fixed leg strike swap rate.
+%   discountCurve       : [Struct] ESTR OIS discounting curve data (.dates, .discounts).
+%   volData             : [Matrix] Volatility matrix structure.
+%   hazardRate          : [Scalar] Constant intensity of default lambda.
+%   recoveryRate        : [Scalar] Expected recovery rate R.
+%   past_fixing_rate    : [Scalar] Pre-determined historical Euribor 3M fixing rate.
+%
+% OUTPUTS:
+%   CVA                           : [Scalar] Total Credit Value Adjustment.
+%   EE_profile                    : [Vector] Expected Exposure vector (at each payment date).
+
+    if nargin < 8 || isempty(past_fixing_rate)
+        past_fixing_rate = [];
+    end
+
+    % 1. PROBABILITY OF DEFAULT
+
+    % Compute ACT/365 year fractions from settlement to each payment date
     payDates = scheduleSwap.payDates;
     T_default = yearfrac(settlement, payDates, 3);
 
-    % Vectorized Survival and Default Probabilities
+    % Compute survival probabilities 
     SP = exp(-hazardRate * T_default);
-    SP_prev = [1; SP(1:end-1)]; % Forward shift to obtain SP_{i-1}
-    PD = SP_prev - SP;          % Marginal Probability of Default for each node
     
-    % EXPECTED EXPOSURE CALCULATION (Single vectorized call) 
-    [EE_profile, ~, ~, ~] = price_swap_bachelier(...
-        settlement, scheduleSwap, swapMarketData, volData, K, estCurv);
-        
-    % CVA ACCUMULATION (Dot product of the vectors)
-    % Expected Exposure * Marginal PD * Loss Given Default
-    CVA = sum((1 - recoveryRate) .* EE_profile .* PD);
+    % Shift survival probabilities array to obtain SP_{i-1}
+    SP_prev = [1; SP(1:end-1)];
     
+    % Calculate marginal default probabilities
+    PD = SP_prev - SP;
+    
+    % 2. EXPECTED EXPOSURE PRICING
+    
+    [EE_profile, ~, ~] = price_swap_bachelier(settlement, scheduleSwap,...
+        K, discountCurve, volData, past_fixing_rate);
+    
+    % 3. CVA CALCULATION
+    
+    % Define the loss given default
+    LGD = (1 - recoveryRate);
+    
+    % Determine the total Credit Value Adjustment
+    CVA = LGD * sum(EE_profile .* PD);
 end

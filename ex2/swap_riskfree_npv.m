@@ -1,32 +1,57 @@
-function [npvBank, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv(scheduleSwap, swapMarketData, K)
-    % SWAP_RISKFREE_NPV_FAST Calculates the Risk-Free NPV of an amortizing IRS
-    % using pre-computed market data (discounts and forward rates).
-    %
-    % Inputs:
-    %   scheduleSwap   - Struct containing vectors of delta and notionals
-    %   swapMarketData - Struct containing .B_ois and .F_forward
-    %   K              - Fixed strike rate (e.g., 0.0221)
-    %
-    % Outputs:
-    %   npvBank      - Net NPV from the bank's perspective (Rec Float, Pay Fix)
-    %   npvFixedLeg  - Present Value of the Fixed Leg
-    %   npvFloatLeg  - Present Value of the Floating Leg
+function [npvBank, npvFixedLeg, npvFloatLeg] = swap_riskfree_npv(...
+    settlement, scheduleSwap, K, past_fixing_rate)
+% SWAP_RISKFREE_NPV_V2 Computes the Risk-Free Net Present Value of an amortizing swap.
+%
+% INPUTS:
+%   settlement          : [Scalar] Valuation date (datenum).
+%   scheduleSwap        : [Struct] Swap schedule container with active periods:
+%                           - .accrualStart : Period start dates (datenum)
+%                           - .accrualEnd   : Period end dates (datenum)
+%                           - .payDates     : Coupon payment dates (datenum)
+%                           - .notionals    : Active outstanding amortizing notionals
+%                           - .yf_pay       : Year fractions for payment periods (ACT/360)
+%                           - .F_forward    : Forward Libor rates
+%                           - .B_ois        : discounts at payments dates
+%   K                   : [Scalar] Fixed leg strike swap rate.
+%   past_fixing_rate    : [Scalar] Pre-determined historical Euribor 3M fixing rate (optional).
+%
+% OUTPUTS:
+%   npvBank             : [Scalar] Net NPV from Bank perspective (Receive Float, Pay Fixed).
+%   npvFixedLeg         : [Scalar] Present Value of the Fixed coupon leg.
+%   npvFloatLeg         : [Scalar] Present Value of the Floating leg.
 
-    % Extract arrays
-    deltas    = scheduleSwap.delta;
+    % Check if optional past fixing rate is provided
+        if nargin < 4 || isempty(past_fixing_rate)
+            past_fixing_rate = [];
+        end
+
+    % Extract useful data
     notionals = scheduleSwap.notionals;
-    B_ois     = swapMarketData.B_ois;
-    F_forward = swapMarketData.F_forward;
+    accrualStart = scheduleSwap.accrualStart;
+    yf_pay =  scheduleSwap.yf_pay;
+    B_ois = scheduleSwap.B_ois;
+    F_forward = scheduleSwap.F_forward;
     
-    % VECTORIZED CASH FLOWS
-    % Element-wise multiplication '.*'
-    cf_fixed = notionals .* K .* deltas;
-    cf_float = notionals .* F_forward .* deltas;
+    if accrualStart(1) < settlement
+        if isempty(past_fixing_rate)
+            error('Valuation is mid-period, but past_fixing_rate was not provided!');
+        end
+        F_forward(1) = past_fixing_rate;
+    end
+    % Compute cash flow vector for fixed leg
+    cf_fixed = notionals .* K .* yf_pay;
     
-    % DISCOUNTING & LEGS PRESENT VALUE
+    % Compute cash flow vector for floating leg 
+    cf_float = notionals .* F_forward .* yf_pay;
+    
+    % Calculate total Present Value of Fixed Leg by multiplying cash flows 
+    % by discounts and summing
     npvFixedLeg = sum(cf_fixed .* B_ois);
+    
+    % Calculate total Present Value of Float Leg by multiplying cash flows 
+    % by discounts and summing
     npvFloatLeg = sum(cf_float .* B_ois);
     
-    % NET NPV (Bank perspective)
+    % Compute Net NPV from Bank view (Receive Float, Pay Fixed).
     npvBank = npvFloatLeg - npvFixedLeg;
 end

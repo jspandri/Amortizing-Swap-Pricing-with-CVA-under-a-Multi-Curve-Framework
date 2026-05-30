@@ -26,7 +26,7 @@ settlement_22 = datewrkdy(trade_date_22, 3); % Find settlement date (+2BD,
 % Volatility matrix data
 vol_data_22 = read_vol_matrix_data("20220626_vol_matrix.xlsx");
 % Swap amortizing plan
-scheduleSwap_22 = read_amortizing_plan('SwapAmortizingPlan_v1');
+ammortizing_data_22= read_amortizing_plan('SwapAmortizingPlan_v1');
 
 
 % 2023 Data ---------------------------------------------------------------
@@ -46,58 +46,59 @@ vol_data_23 = read_vol_matrix_data("20230131_vol_matrix.xlsx");
 %% 2) Risk Free Amortizing Swap Pricing
 
 K_strike = 0.0221; 
-swapMarketData = precompute_swap_market_data(settlement_22, scheduleSwap_22, discountCurve_22, pseudoCurve_22);
-[NPV_riskfree, PV_fixed, PV_float] = swap_riskfree_npv(scheduleSwap_22, swapMarketData, K_strike);
-% check dates (controllo date lascaire per ora) 
-mio_vettore_datetime = datetime(swapMarketData.payDates, 'ConvertFrom', 'datenum');
+scheduleSwap_22 = generate_swap_schedule_22(settlement_22, ammortizing_data_22, discountCurve_22, pseudoCurve_22);
+[NPV_riskfree, PV_fixed, PV_float] = swap_riskfree_npv(settlement_22,scheduleSwap_22,K_strike);
+
 %% 3) Amortizing Swap Pricing with CVA
 
 RecoveryRate               = 0.6;
 CDS_spreads                = [300; 500] * 1e-4; % 300 bps and 500 bps
 HazardRates                = CDS_spreads / (1 - RecoveryRate);
-NPV = zeros(1,2);
+NPV_22 = zeros(1,2);
 EE_profile = zeros(length(scheduleSwap_22.payDates),2) ;
 Total_CVA = zeros(1,2);
 
-for i= 1:2
+for i = 1:2  
     [Total_CVA(i), EE_profile(:, i)] = calculate_cva_bachelier(...
-        settlement_22, scheduleSwap_22, swapMarketData, vol_data_22, HazardRates(i), RecoveryRate,K_strike,discountCurve_22);
-    NPV(i) = NPV_riskfree-Total_CVA(i);
+        settlement_22,scheduleSwap_22,K_strike,discountCurve_22,vol_data_22,HazardRates(i),RecoveryRate);        
+ 
+    NPV_22(i) = NPV_riskfree - Total_CVA(i);
 end
 plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
 
 %% 4) Unwinding
-
 maturity_date_not_adjusted = datenum("28-Jun-2037");
 notional_amortized = scheduleSwap_22.notionals;
-
-% Define the known historical fixing rate for the ongoing period (2.202%)
+% Define the known historical fixing rate for the ongoing period
 past_fixing_rate = 0.02202;
 
-% Bootstrap the OIS discount curve and Euribor pseudo-discount curve at the unwinding date
+% Bootstrap the OIS discount curve and Euribor pseudo-discount curve
 [discountCurve_23, pseudoCurve_23] = multi_curve_bootstrap(euriborSet_23, estrSet_23); 
 
 % Generate the swap schedule starting from the new settlement date
 scheduleSwap_23 = generate_swap_schedule(settlement_23, settlement_22, ...
-    maturity_date_not_adjusted, notional_amortized,discountCurve_23,pseudoCurve_23);
+    maturity_date_not_adjusted, notional_amortized, discountCurve_23, pseudoCurve_23);
 
-% Compute the Risk-Free Net Present Value (NPV) of the swap at the unwinding date
-NPV_RF = swap_riskfree_npv_v2(settlement_23, scheduleSwap_23, K_strike, past_fixing_rate);
+% Compute the Risk-Free Net Present Value (NPV) at the unwinding date
+NPV_RF_23 = swap_riskfree_npv(settlement_23, scheduleSwap_23, K_strike, past_fixing_rate);
 
-% Compute CVA and Expected Exposure profile for the 300 bps CDS spread at unwinding
-[CVA_300, EE_300] = calculate_cva_bachelier_v2(settlement_23, scheduleSwap_23, K_strike, ...
-    discountCurve_23, vol_data_23, HazardRates(1), RecoveryRate, past_fixing_rate);
+% Preallocate arrays
+NPV_23 = zeros(1, 2);
+EE_profile_23 = zeros(length(scheduleSwap_23.payDates), 2);
+Total_CVA_23 = zeros(1, 2);
 
-% Compute CVA and Expected Exposure profile for the 500 bps CDS spread at unwinding
-[CVA_500, EE_500] = calculate_cva_bachelier_v2(settlement_23, scheduleSwap_23, K_strike, ...
-    discountCurve_23, vol_data_23, HazardRates(2), RecoveryRate, past_fixing_rate);
+% Compute CVA and NPV for both CDS spreads
+for i = 1:2
+    [Total_CVA_23(i), EE_profile_23(:, i)] = calculate_cva_bachelier(...
+        settlement_23, scheduleSwap_23, K_strike, discountCurve_23, ...
+        vol_data_23, HazardRates(i), RecoveryRate, past_fixing_rate);
+        
+    % Compute the final unwinding NPV adjusted for Counterparty Credit Risk (CVA)
+    NPV_23(i) = NPV_RF_23 - Total_CVA_23(i);
+end
 
 % Plot the Expected Exposure profiles for the unwinding date
-plot_expected_exposures(scheduleSwap_23.payDates, EE_300, EE_500, CDS_spreads);
-
-% Compute the final unwinding NPV adjusted for Counterparty Credit Risk (CVA)
-NPV_with_CVA_300 = NPV_RF - CVA_300;
-NPV_with_CVA_500 = NPV_RF - CVA_500;
+plot_expected_exposures(scheduleSwap_23.payDates, EE_profile_23(:,1), EE_profile_23(:,2), CDS_spreads);
 
 %% 5) Multi-Curve Swaption Model
 
