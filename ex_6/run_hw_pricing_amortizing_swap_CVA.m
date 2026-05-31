@@ -1,6 +1,5 @@
 function results_struct = run_hw_pricing_amortizing_swap_CVA(a, sigma, sigma_times,K, ...
-    startDate, maturity_date_not_adjusted, precision_levels, notional_amortized, ...
-    RecoveryRate, HazardRate, ois_curve, eur_curve)
+    startDate, scheduleSwap, precision_levels, RecoveryRate, HazardRate, ois_curve, eur_curve)
 % RUN_HW_PRICING_AMORTIZING_SWAP_CVA Manages the convergence loop for pricing.
 %
 % This function manages the entire workflow: it constructs the uniform 
@@ -14,9 +13,15 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA(a, sigma, sigma_tim
 %   sigma_times                : [Vector] Time buckets corresponding to the sigma vector.
 %   K                          : [Scalar] Fixed swap strike rate.
 %   startDate                  : [Scalar/Datetime] Tree valuation/settle date (t0).
-%   maturity_date_not_adjusted : [Scalar/Datetime] Unadjusted final maturity date.
+%   scheduleSwap               : [Struct] Swap schedule container with active periods:
+%                                       - .accrualStart : Period start dates (datenum)
+%                                       - .accrualEnd   : Period end dates (datenum)
+%                                       - .payDates     : Coupon payment dates (datenum)
+%                                       - .notionals    : Active outstanding amortizing notionals
+%                                       - .yf_pay       : Year fractions for payment periods (ACT/360)
+%                                       - .F_forward    : Forward Libor rates
+%                                       - .B_ois        : discounts at payments dates
 %   precision_levels           : [Vector] Grid steps per year to test for convergence.
-%   notional_amortized         : [Vector] Amortizing principal schedule matching payment dates.
 %   ois_curve                  : [Struct] Market OIS curve (.dates, .discounts).
 %   eur_curve                  : [Struct] Market Euribor curve (.dates, .discounts).
 %   RecoveryRate               : [Scalar] Recovery rate in case of default.
@@ -41,24 +46,18 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA(a, sigma, sigma_tim
     prices = zeros(n_levels, 1);
     num_nodes = zeros(n_levels, 1);
     
-    % 2. SCHEDULE PREPARATION
-    
-    % Generate the complete swap schedule
-    scheduleSwap = generate_swap_schedule(startDate, startDate, ...
-        maturity_date_not_adjusted, notional_amortized, ois_curve, eur_curve);
-    
     % Extract payment dates 
     paymentDates = scheduleSwap.payDates;
      
     % Set the final maturity date (it's the last calculated payment date)
     maturityDate = paymentDates(end);
     
-    % 3. BASE VOLATILITY FOR TREE GEOMETRY
+    % 2. BASE VOLATILITY FOR TREE GEOMETRY
     % Calculate the mean of the sigma array to build an uniformly spaced tree grid
     % If sigma is scalar, the mean coincide with sigma
     sigma_base = mean(sigma);
    
-    % 4. CONVERGENCE LOOP
+    % 3. CONVERGENCE LOOP
     % Iterate through each requested precision level to evaluate model numerical stability
     for j = 1:n_levels
         
@@ -92,7 +91,7 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA(a, sigma, sigma_tim
             scheduleSwap, RecoveryRate, HazardRate);
     end
     
-    % 5. RESULTS PACKAGING
+    % 4. RESULTS PACKAGING
     % Initialize the output structured object
     results_struct = struct();
     
