@@ -288,8 +288,39 @@ full_discounts_float_curr = full_discounts_float(2:end);
 last_future_date = pseudo_dates(end);
 idx_known = find(full_t_curr_float <= last_future_date);
 num_quarters_known = length(idx_known);
-schedule_float_known = full_schedule_float(1 : num_quarters_known + 1);
 
+% Compute actual number of required quarters to compute payment leg at exactly 
+% one year prior to the first available swap maturity
+required_quarters = (round(yearfrac(settlement, swaps_dates(1), 0)) - 1) * 4;
+
+% Determine if some quarters are not known (pseudo-curve not covered)
+if num_quarters_known < required_quarters
+    % Compute piecewise-constant beta between two last known
+    % pseudo-discounts nodes
+    discount_end = get_discount_factor_by_zero_rates_linear_interp(settlement, pseudo_dates(end), discountCurve.dates, discountCurve.discounts);
+    discount_prev = get_discount_factor_by_zero_rates_linear_interp(settlement, pseudo_dates(end-1), discountCurve.dates, discountCurve.discounts);
+    beta_const = (discount_end / discount_prev) / (pseudo_discounts(end) / pseudo_discounts(end-1));
+    
+    % For each unknown quarter impose beta piecewise-constant to obtain
+    % pseudo-discount values
+    for k = (num_quarters_known + 1) : required_quarters
+        % Extract date and obtain discount factors at current interval
+        t_curr = full_t_curr_float(k);
+        discount_curr = get_discount_factor_by_zero_rates_linear_interp(settlement, t_curr, discountCurve.dates, discountCurve.discounts);
+        discount_last = get_discount_factor_by_zero_rates_linear_interp(settlement, pseudo_dates(end), discountCurve.dates, discountCurve.discounts);
+        
+        % Compute missing pseudo-discount 
+        pseudo_forward = (discount_curr / discount_last) / beta_const;
+        pseudo_discounts = [pseudo_discounts; pseudo_discounts(end) * pseudo_forward];
+        pseudo_dates = [pseudo_dates; t_curr];
+    end
+    
+    % Now update number of known quarters
+    num_quarters_known = required_quarters;
+end
+
+% Extract known dates, deltas and pseudo-discounts
+schedule_float_known = full_schedule_float(1 : num_quarters_known + 1);
 deltas_float_known = yearfrac(full_t_prev_float(1:num_quarters_known), full_t_curr_float(1:num_quarters_known), 2);
 pseudo_disc = get_discount_factor_by_zero_rates_linear_interp(settlement, schedule_float_known, ... 
                 pseudo_dates, pseudo_discounts);
