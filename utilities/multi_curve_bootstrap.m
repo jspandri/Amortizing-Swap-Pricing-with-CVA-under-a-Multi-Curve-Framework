@@ -1,7 +1,7 @@
 function [discountCurve, pseudoCurve] = multi_curve_bootstrap(euriborSet, estrSet)
 % Performs dual-curve (discount and pseudo-discount curves) bootstrap with 
 % crab approach. Requires OIS ESTR and Euribor3m instruments.
-% Returns discounting (OIS ESTR) and pseudo-discounting (Euribor3m) curves
+% Returns discounting (ESTR) and pseudo-discounting (Euribor3m) curves
 % as a struct containing discount factors, zero-rates and corresponding
 % dates.
 %
@@ -24,7 +24,7 @@ settlement = estrSet.settlement;
 
 %% DISCOUNTING CURVE (OIS ESTR Curve)
 
-% Extract OIS ESTR dates and rates
+% Extract ESTR dates and rates
 estrDates = estrSet.dates;
 estrRates = estrSet.rates;
 
@@ -67,7 +67,7 @@ yearly_deltas = yearfrac(yearly_prev, yearly_dates, 2); % ACT/360
 for i = 1:length(idx_above_1y)
     idx = idx_above_1y(i);
     T = estrDates(idx);
-    R_ois = estrRates(idx);
+    R_estr = estrRates(idx);
 
     % Define if it is a full years maturity 
     is_full_year = (yearly_dates == T);
@@ -86,7 +86,7 @@ for i = 1:length(idx_above_1y)
         delta_i = yearfrac(last_date, T, 2) ;% ACT/360  
         
         % Compute discount at T
-        discount = (1 - R_ois * fixed_leg) / (1 + delta_i * R_ois);
+        discount = (1 - R_estr * fixed_leg) / (1 + delta_i * R_estr);
 
         % Save into yearly_discounts for next iterations
         yearly_discounts(is_full_year) = discount;
@@ -113,7 +113,7 @@ for i = 1:length(idx_above_1y)
         delta_i = yearfrac(schedule(end-1), schedule(end), 2); % ACT/360
 
         % Compute discount at T
-        discount = (1 - R_ois * fixed_leg) / (1 + delta_i * R_ois);
+        discount = (1 - R_estr * fixed_leg) / (1 + delta_i * R_estr);
     end
     discounts(idx) = discount;
 end
