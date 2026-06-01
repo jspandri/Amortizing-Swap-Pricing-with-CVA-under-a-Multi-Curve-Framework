@@ -38,10 +38,15 @@ settlement_23 = datewrkdy(trade_date_23, 3);
 % Volatility matrix data
 vol_data_23 = read_vol_matrix_data("20230131_vol_matrix.xlsx");
 
-%% 1) Multi-Curve Bootstrap
+%% 1) Multi-Curve Bootstrap (both 2022 and 2023)
 
 % Bootstrap discount (OIS ESTR) and pseudo-discount (Euribor3m) curves
+
+% 2022
 [discountCurve_22, pseudoCurve_22] = multi_curve_bootstrap(euriborSet_22, estrSet_22);
+
+% 2023
+[discountCurve_23, pseudoCurve_23] = multi_curve_bootstrap(euriborSet_23, estrSet_23); 
 
 %% 2) Risk Free Amortizing Swap Pricing
 
@@ -72,9 +77,6 @@ maturity_date_not_adjusted = datenum("28-Jun-2037");
 notional_amortized = scheduleSwap_22.notionals;
 % Define the known historical fixing rate for the ongoing period
 past_fixing_rate = 0.02202;
-
-% Bootstrap the OIS discount curve and Euribor pseudo-discount curve
-[discountCurve_23, pseudoCurve_23] = multi_curve_bootstrap(euriborSet_23, estrSet_23); 
 
 % Generate the swap schedule starting from the new settlement date
 %scheduleSwap_23 = generate_swap_schedule(settlement_23, settlement_22, ...

@@ -300,7 +300,7 @@ if num_quarters_known < required_quarters
     discount_end = get_discount_factor_by_zero_rates_linear_interp(settlement, pseudo_dates(end), discountCurve.dates, discountCurve.discounts);
     discount_prev = get_discount_factor_by_zero_rates_linear_interp(settlement, pseudo_dates(end-1), discountCurve.dates, discountCurve.discounts);
     beta_const = (discount_end / discount_prev) / (pseudo_discounts(end) / pseudo_discounts(end-1));
-    
+
     % For each unknown quarter impose beta piecewise-constant to obtain
     % pseudo-discount values
     for k = (num_quarters_known + 1) : required_quarters
@@ -308,13 +308,13 @@ if num_quarters_known < required_quarters
         t_curr = full_t_curr_float(k);
         discount_curr = get_discount_factor_by_zero_rates_linear_interp(settlement, t_curr, discountCurve.dates, discountCurve.discounts);
         discount_last = get_discount_factor_by_zero_rates_linear_interp(settlement, pseudo_dates(end), discountCurve.dates, discountCurve.discounts);
-        
+
         % Compute missing pseudo-discount 
         pseudo_forward = (discount_curr / discount_last) / beta_const;
         pseudo_discounts = [pseudo_discounts; pseudo_discounts(end) * pseudo_forward];
         pseudo_dates = [pseudo_dates; t_curr];
     end
-    
+
     % Now update number of known quarters
     num_quarters_known = required_quarters;
 end
@@ -332,7 +332,7 @@ L_k = (pseudo_prev ./ pseudo_curr - 1) ./ deltas_float_known;
 float_leg = deltas_float_known .* L_k .* full_discounts_float_curr(1:num_quarters_known);
 I_prev = sum(float_leg);
 
-% Now start to bootstrap using available swap rates
+% Now start bootstrap using available swap rates
 for i = 1:length(swaps_dates)
     % Extract current swap rate
     swap_rate = swaps_rates(i);
@@ -410,23 +410,43 @@ pseudoCurve = struct('discounts', pseudo_discounts(2:end), 'zeroRates', euriborZ
 
 %% PLOT
 
-figure;
+
+colorEuribor = [100, 180, 210] / 255;  
+colorESTR    = [225, 125, 115] / 255; 
+figure; 
 
 eurDates  = datetime(pseudoCurve.dates, 'ConvertFrom', 'datenum');
 estrDates = datetime(discountCurve.dates, 'ConvertFrom', 'datenum');
 
-plot(eurDates, pseudoCurve.zeroRates,  'LineWidth', 1.5);
+plot(eurDates, pseudoCurve.zeroRates * 100, '-', 'LineWidth', 3.0, 'Color', colorEuribor);
 hold on;
+plot(estrDates, discountCurve.zeroRates * 100, '-', 'LineWidth', 3.0, 'Color', colorESTR);
 
-plot(estrDates, discountCurve.zeroRates, 'LineWidth', 1.5);
+ax = gca;
+ax.FontName = 'Times New Roman';
+ax.FontSize = 20;
+ax.Box = 'off';
+ax.XColor = [0.3 0.3 0.3];
+ax.YColor = [0.3 0.3 0.3];
+ax.LineWidth = 1.5;
+ytickformat('%.2f%%'); 
 
 grid on;
+ax.GridLineStyle = ':';
+ax.GridColor = [0.7 0.7 0.7];
+ax.GridAlpha = 0.6;
+
+xlabel('Date', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
+ylabel('Zero Rate', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
+titleText = sprintf('EURIBOR3M vs OIS ESTR Zero Rates (Settlement: %s)', datestr(settlement, 'dd-mmm-yyyy'));
+title(titleText, 'FontName', 'Times New Roman', 'FontSize', 24, 'FontWeight', 'bold');
+
+lgd = legend('EURIBOR3M', 'OIS ESTR', 'Location', 'best');
+lgd.FontName = 'Times New Roman';
+lgd.FontSize = 16; 
+lgd.Box = 'on';
+lgd.EdgeColor = [0.8 0.8 0.8]; 
+lgd.Color = [0.98 0.98 0.98]; 
 zoom on;
-
-xlabel('Date');
-ylabel('Zero Rate');
-title('EURIBOR3M vs OIS ESTR Zero Rates');
-
-legend('EURIBOR3M', 'OIS ESTR', 'Location', 'best');
 
 end
