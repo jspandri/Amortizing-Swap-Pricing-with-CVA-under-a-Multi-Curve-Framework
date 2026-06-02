@@ -76,7 +76,7 @@ plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,
 maturity_date_not_adjusted = datenum("28-Jun-2037");
 notional_amortized = scheduleSwap_22.notionals;
 % Define the known historical fixing rate for the ongoing period
-past_fixing_rate = 0.02202;
+past_fixing_rate = 0.02141;
 
 % Generate the swap schedule starting from the new settlement date
 %scheduleSwap_23 = generate_swap_schedule(settlement_23, settlement_22, ...
