@@ -54,7 +54,8 @@ K_strike = 0.0221;
 %scheduleSwap_22 = generate_swap_schedule_22(settlement_22, ammortizing_data_22, discountCurve_22, pseudoCurve_22);
 scheduleSwap_22 = generate_active_swap_schedule2(settlement_22, rawSchedule_Excel, discountCurve_22, pseudoCurve_22);
 [NPV_riskfree, PV_fixed, PV_float] = swap_riskfree_npv(settlement_22,scheduleSwap_22,K_strike);
-
+BPV = PV_fixed / K_strike; 
+K_fair = PV_float / BPV;
 %% 3) Amortizing Swap Pricing with CVA
 
 RecoveryRate               = 0.6;
