@@ -43,10 +43,10 @@ vol_data_23 = read_vol_matrix_data("20230131_vol_matrix.xlsx");
 % Bootstrap discount (OIS ESTR) and pseudo-discount (Euribor3m) curves
 
 % 2022
-[discountCurve_22, pseudoCurve_22] = multi_curve_bootstrap(euriborSet_22, estrSet_22);
+[discountCurve_22, pseudoCurve_22] = multi_curve_bootstrap(euriborSet_22, estrSet_22, true);
 
 % 2023
-[discountCurve_23, pseudoCurve_23] = multi_curve_bootstrap(euriborSet_23, estrSet_23); 
+[discountCurve_23, pseudoCurve_23] = multi_curve_bootstrap(euriborSet_23, estrSet_23, true); 
 
 %% 2) Risk Free Amortizing Swap Pricing
 
@@ -114,8 +114,14 @@ gammas = [0; 0.5; 1];
 % Calibrate MHW parameters (with constant parameters and piecewise constant gamma) 
 [results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaption_model(settlement_22, discountCurve_22, pseudoCurve_22, vol_data_22, diag_expiries, diag_tenors, gammas);
 
+% Re-Bootstrap with convexity adjustment
+[pseudoCurves_adj_22] = rebootstrap_convexity_adjustment(euriborSet_22, estrSet_22, pseudoCurve_22, gammas, results_const);
+
 %% 6) Hull-White Tree Pricing
 
+% Extract pseudo-discounting curve reboostrapped with MHW parameters at
+% gamma = 0
+pseudoCurve_adj_22 = pseudoCurves_adj_22(1).curve;
 
 % Calibrated Hull-White parameters (from Point 5)
 a_param             = results_const(1).a;      % Mean reversion speed
@@ -132,4 +138,4 @@ precision_levels = [1, 4, 12, 52, 365];
 [res_300_const, res_500_const, res_300_pwc, res_500_pwc] = execute_project_point6(...
     a_param, sigma_const, sigma_pwc, sigma_times, K_strike, settlement_22, ...
     scheduleSwap_22, precision_levels, RecoveryRate, HazardRates, ...
-    discountCurve_22, pseudoCurve_22);
+    discountCurve_22, pseudoCurve_adj_22);

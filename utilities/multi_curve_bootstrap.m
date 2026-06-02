@@ -1,4 +1,4 @@
-function [discountCurve, pseudoCurve] = multi_curve_bootstrap(euriborSet, estrSet)
+function [discountCurve, pseudoCurve] = multi_curve_bootstrap(euriborSet, estrSet, plot_bool, mhw_params)
 % Performs dual-curve (discount and pseudo-discount curves) bootstrap with 
 % crab approach. Requires OIS ESTR and Euribor3m instruments.
 % Returns discounting (ESTR) and pseudo-discounting (Euribor3m) curves
@@ -10,6 +10,12 @@ function [discountCurve, pseudoCurve] = multi_curve_bootstrap(euriborSet, estrSe
 %                         corresponding instruments.
 %   estrSet             - struct containing OIS ESTR rates and dates of
 %                         corresponding instruments.
+%   plot_bool           - (Optional) bool = true => plot the bootstrapped
+%                                                   curves
+%                         Default: no plot.
+%   mhw_params          - (Optional) Multi-Curve Hull-White parameters to
+%                         convexity adjust futures rates.
+%                         Default: neglect convexity adjustment.
 %
 % OUTPUTS:
 %   discountCurve       - struct of discounting (OIS ESTR) curve 
@@ -157,6 +163,24 @@ pseudo_discounts = [1; depo_discount];
 futures_starts = euriborSet.datesSet.futures(:, 1);
 futures_ends = euriborSet.datesSet.futures(:, 2);
 futures_rates = euriborSet.ratesSet.futures;
+
+% If Hull-White calibrated parameters are provided then consider convexity
+% adjustment for STIR futures rates
+if nargin == 4 && ~isempty(mhw_params)
+    a = mhw_params.a;
+    sigma = mhw_params.sigma;
+    gamma = mhw_params.gamma;
+
+    t_start = yearfrac(settlement, futures_starts, 3); % ACT/365
+    t_end   = yearfrac(settlement, futures_ends, 3); % ACT/365
+    delta   = yearfrac(futures_starts, futures_ends, 2); % ACT/360
+
+    % Compute convexity adjustment gamma_tilda
+    gamma_tilda = compute_convexity_adjustment(a, sigma, gamma, t_start, t_end); 
+    
+    % Convexity adjustment of rates via approximation using gamma_tilda
+    futures_rates = futures_rates - (gamma_tilda ./ delta);
+end
 
 % Find future 3x6
 idx_3x6 = find_future_idx(settlement, futures_starts, 3);
@@ -410,43 +434,46 @@ pseudoCurve = struct('discounts', pseudo_discounts(2:end), 'zeroRates', euriborZ
 
 %% PLOT
 
-
-colorEuribor = [100, 180, 210] / 255;  
-colorESTR    = [225, 125, 115] / 255; 
-figure; 
-
-eurDates  = datetime(pseudoCurve.dates, 'ConvertFrom', 'datenum');
-estrDates = datetime(discountCurve.dates, 'ConvertFrom', 'datenum');
-
-plot(eurDates, pseudoCurve.zeroRates * 100, '-', 'LineWidth', 3.0, 'Color', colorEuribor);
-hold on;
-plot(estrDates, discountCurve.zeroRates * 100, '-', 'LineWidth', 3.0, 'Color', colorESTR);
-
-ax = gca;
-ax.FontName = 'Times New Roman';
-ax.FontSize = 20;
-ax.Box = 'off';
-ax.XColor = [0.3 0.3 0.3];
-ax.YColor = [0.3 0.3 0.3];
-ax.LineWidth = 1.5;
-ytickformat('%.2f%%'); 
-
-grid on;
-ax.GridLineStyle = ':';
-ax.GridColor = [0.7 0.7 0.7];
-ax.GridAlpha = 0.6;
-
-xlabel('Date', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
-ylabel('Zero Rate', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
-titleText = sprintf('EURIBOR3M vs OIS ESTR Zero Rates (Settlement: %s)', datestr(settlement, 'dd-mmm-yyyy'));
-title(titleText, 'FontName', 'Times New Roman', 'FontSize', 24, 'FontWeight', 'bold');
-
-lgd = legend('EURIBOR3M', 'OIS ESTR', 'Location', 'best');
-lgd.FontName = 'Times New Roman';
-lgd.FontSize = 16; 
-lgd.Box = 'on';
-lgd.EdgeColor = [0.8 0.8 0.8]; 
-lgd.Color = [0.98 0.98 0.98]; 
-zoom on;
+if nargin >= 3 && plot_bool == true
+    
+    colorEuribor = [100, 180, 210] / 255;  
+    colorESTR    = [225, 125, 115] / 255; 
+    figure; 
+    
+    eurDates  = datetime(pseudoCurve.dates, 'ConvertFrom', 'datenum');
+    estrDates = datetime(discountCurve.dates, 'ConvertFrom', 'datenum');
+    
+    plot(eurDates, pseudoCurve.zeroRates * 100, '-', 'LineWidth', 3.0, 'Color', colorEuribor);
+    hold on;
+    plot(estrDates, discountCurve.zeroRates * 100, '-', 'LineWidth', 3.0, 'Color', colorESTR);
+    
+    ax = gca;
+    ax.FontName = 'Times New Roman';
+    ax.FontSize = 20;
+    ax.Box = 'off';
+    ax.XColor = [0.3 0.3 0.3];
+    ax.YColor = [0.3 0.3 0.3];
+    ax.LineWidth = 1.5;
+    ytickformat('%.2f%%'); 
+    
+    grid on;
+    ax.GridLineStyle = ':';
+    ax.GridColor = [0.7 0.7 0.7];
+    ax.GridAlpha = 0.6;
+    
+    xlabel('Date', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
+    ylabel('Zero Rate', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
+    titleText = sprintf('EURIBOR3M vs OIS ESTR Zero Rates (Settlement: %s)', datestr(settlement, 'dd-mmm-yyyy'));
+    title(titleText, 'FontName', 'Times New Roman', 'FontSize', 24, 'FontWeight', 'bold');
+    
+    lgd = legend('EURIBOR3M', 'OIS ESTR', 'Location', 'best');
+    lgd.FontName = 'Times New Roman';
+    lgd.FontSize = 16; 
+    lgd.Box = 'on';
+    lgd.EdgeColor = [0.8 0.8 0.8]; 
+    lgd.Color = [0.98 0.98 0.98]; 
+    
+    zoom on;
+end
 
 end
