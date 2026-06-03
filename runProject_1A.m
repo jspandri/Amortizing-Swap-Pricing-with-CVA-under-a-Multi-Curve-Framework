@@ -71,7 +71,10 @@ for i = 1:2
  
     NPV_22(i) = NPV_riskfree - Total_CVA(i);
 end
-plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
+%plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
+plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile, HazardRates, RecoveryRate, settlement_22, [300, 500]);
+%plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile(:,1), HazardRates(1), RecoveryRate, settlement_22)
+
 
 %% 4) Unwinding
 maturity_date_not_adjusted = datenum("28-Jun-2037");
@@ -103,7 +106,8 @@ for i = 1:2
 end
 
 % Plot the Expected Exposure profiles for the unwinding date
-plot_expected_exposures(scheduleSwap_23.payDates, EE_profile_23(:,1), EE_profile_23(:,2), CDS_spreads);
+%plot_expected_exposures(scheduleSwap_23.payDates, EE_profile_23(:,1), EE_profile_23(:,2), CDS_spreads);
+plot_cva_educational_dashboard(scheduleSwap_23.payDates, EE_profile_23, HazardRates, RecoveryRate, settlement_23, [300, 500]);
 
 %% 5) Multi-Curve Swaption Model
 

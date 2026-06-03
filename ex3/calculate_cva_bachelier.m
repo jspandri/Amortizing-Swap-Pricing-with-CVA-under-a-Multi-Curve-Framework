@@ -1,6 +1,6 @@
 function [CVA, EE_profile] = calculate_cva_bachelier(settlement,scheduleSwap, K, ...
     discountCurve, volData, hazardRate, recoveryRate, past_fixing_rate)
-% CALCULATE_CVA_BACHELIER_V2 Computes the Credit Value Adjustment (CVA) 
+%   the Credit Value Adjustment (CVA) 
 % for an amortizing swap using a Bachelier pricing model.
 %
 % INPUTS:
