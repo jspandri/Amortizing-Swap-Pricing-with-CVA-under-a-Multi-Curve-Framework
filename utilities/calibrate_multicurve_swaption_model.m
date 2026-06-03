@@ -69,12 +69,12 @@ options = optimoptions('lsqnonlin', 'Display', 'off');
 % Define initial guesses, lower and upper bounds
 x0_const = [0.05, 0.01]; % [a, sigma]
 lb_const = [1e-6, 1e-6]; 
-ub_const = [1.0, 1.0];
+ub_const = [100, 100];
 
 % To save optimal values of "a"
 best_params_a = zeros(length(gammas), 1);
 
-fprintf('CALIBRATING CONSTANT PARAMETERS ...\n');
+fprintf('\n CALIBRATING CONSTANT PARAMETERS ...\n');
 for i = 1:length(gammas)
     % Current gamma
     gamma = gammas(i);
@@ -96,8 +96,8 @@ for i = 1:length(gammas)
     results_const(i).resnorm = resnorm_const; 
     results_const(i).model_prices = residuals_const + mkt_prices; 
     
-    fprintf('Fixed Gamma = %.1f: a = %.4f%%, sigma = %.4f%% (resnorm = %e)\n', ...
-        gamma, best_params_const(1)*100, best_params_const(2)*100, resnorm_const);
+    fprintf('Fixed Gamma = %.1f: a = %.4f, sigma = %.4f%% (resnorm = %e)\n', ...
+        gamma, best_params_const(1), best_params_const(2)*100, resnorm_const);
 end
 
 
@@ -113,7 +113,7 @@ options = optimoptions('lsqnonlin', 'Display', 'off');
 % Define initial guess, lower and upper bound
 x0_pwc = 0.01 * ones(1, n_swaptions); 
 lb_pwc = 1e-6 * ones(1, n_swaptions); 
-ub_pwc = 1 * ones(1, n_swaptions);
+ub_pwc = inf * ones(1, n_swaptions);
 
 fprintf('\n CALIBRATING WITH PIECEWISE CONSTANT SIGMA (TIME DEPENDENT)... \n');
 
@@ -137,48 +137,94 @@ for i = 1:length(gammas)
     results_pwc(i).SSE = resnorm_pwc; 
     results_pwc(i).model_prices = residuals_pwc + mkt_prices; 
     
-    fprintf('Fixed Gamma = %.1f and a = %.4f%%: Mean Sigma = %.4f%% (resnorm = %e)\n', ...
-        gamma, a_fixed*100, mean(best_sigmas)*100, resnorm_pwc);
+    fprintf('Fixed Gamma = %.1f and a = %.4f: Mean Sigma = %.4f%% (resnorm = %e)\n', ...
+        gamma, a_fixed, mean(best_sigmas)*100, resnorm_pwc);
 end
 
 
 %% PLOTS
 
-colors = {[0 0.4470 0.7410], [0.9290 0.6940 0.1250], [0.4940 0.1840 0.5560]};
-styles = {'o--', '^--', 'd--'}; 
+colorMarket = [45, 105, 152] / 255; 
+colorG1     = [225, 125, 115] / 255;
+colorG2     = [220, 160,  50] / 255; 
+colorG3     = [ 75, 165, 145] / 255; 
+colors      = {colorG1, colorG2, colorG3};
+styles      = {'o--', '^--', 'd--'}; 
 
-% PLOT CONSTANT PARAMETERRS
+% CONSTANT PARAMETERS
 figure('Name', 'MHW Calibration - Constant Sigma', 'Color', 'w');
-hold on; grid on;
-plot(diag_expiries, mkt_prices * 100, 's-', 'LineWidth', 2, 'MarkerSize', 8, ...
-    'Color', [0.8500 0.3250 0.0980], 'DisplayName', 'Market');
-    
+hold on; 
+
+plot(diag_expiries, mkt_prices * 100, 's-', 'LineWidth', 2.5, 'MarkerSize', 8, ...
+    'Color', colorMarket, 'MarkerFaceColor', colorMarket, 'DisplayName', 'Market');
+ 
 for i = 1:length(gammas)
     plot(diag_expiries, results_const(i).model_prices * 100, styles{i}, ...
-        'LineWidth', 1.5, 'MarkerSize', 6, 'Color', colors{i}, ...
-        'DisplayName', sprintf('MHW (\\gamma = %.1f)', gammas(i)));
+        'LineWidth', 2.0, 'MarkerSize', 8, 'Color', colors{i}, ...
+        'MarkerFaceColor', 'w', 'DisplayName', sprintf('MHW (\\gamma = %.1f)', gammas(i)));
 end
-xlabel('Expiries (Years)');
-ylabel('Swaption Prices (%)');
-title('Market vs MHW Model (Constant Volatility)');
-legend('Location', 'southoutside', 'NumColumns', 4);
+
+ax = gca;
+ax.FontName = 'Times New Roman';
+ax.FontSize = 20;
+ax.Box = 'off';
+ax.XColor = [0.3 0.3 0.3];
+ax.YColor = [0.3 0.3 0.3];
+ax.LineWidth = 1.5;
+ytickformat('%.2f%%'); 
+
+grid on;
+ax.GridLineStyle = ':';
+ax.GridColor = [0.7 0.7 0.7];
+ax.GridAlpha = 0.6;
+
+xlabel('Expiries (Years)', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
+ylabel('Swaption Prices (%)', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
+title('Market vs MHW Model (Constant Parameters)', 'FontName', 'Times New Roman', 'FontSize', 24, 'FontWeight', 'bold');
+lgd = legend('Location', 'southoutside', 'NumColumns', 4);
+lgd.FontName = 'Times New Roman';
+lgd.FontSize = 16; 
+lgd.Box = 'on';
+lgd.EdgeColor = [0.8 0.8 0.8]; 
+lgd.Color = [0.98 0.98 0.98]; 
 hold off;
 
 % PLOT PIECEWISE CONSTANT SIGMA
 figure('Name', 'MHW Calibration - Piecewise Constant', 'Color', 'w');
-hold on; grid on;
-plot(diag_expiries, mkt_prices * 100, 's-', 'LineWidth', 2, 'MarkerSize', 8, ...
-    'Color', [0.8500 0.3250 0.0980], 'DisplayName', 'Market');
-    
+hold on; 
+
+plot(diag_expiries, mkt_prices * 100, 's-', 'LineWidth', 2.5, 'MarkerSize', 8, ...
+    'Color', colorMarket, 'MarkerFaceColor', colorMarket, 'DisplayName', 'Market');
+  
 for i = 1:length(gammas)
     plot(diag_expiries, results_pwc(i).model_prices * 100, styles{i}, ...
-        'LineWidth', 1.5, 'MarkerSize', 6, 'Color', colors{i}, ...
-        'DisplayName', sprintf('MHW (\\gamma = %.1f)', gammas(i)));
+        'LineWidth', 2.0, 'MarkerSize', 8, 'Color', colors{i}, ...
+        'MarkerFaceColor', 'w', 'DisplayName', sprintf('MHW (\\gamma = %.1f)', gammas(i)));
 end
-xlabel('Expiries (Years)');
-ylabel('Swaption Prices (%)');
-title('Market vs MHW Model (Piecewise Constant Volatility)');
-legend('Location', 'southoutside', 'NumColumns', 4);
+
+ax = gca;
+ax.FontName = 'Times New Roman';
+ax.FontSize = 20;
+ax.Box = 'off';
+ax.XColor = [0.3 0.3 0.3];
+ax.YColor = [0.3 0.3 0.3];
+ax.LineWidth = 1.5;
+ytickformat('%.2f%%'); 
+
+grid on;
+ax.GridLineStyle = ':';
+ax.GridColor = [0.7 0.7 0.7];
+ax.GridAlpha = 0.6;
+
+xlabel('Expiries (Years)', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
+ylabel('Swaption Prices (%)', 'FontName', 'Times New Roman', 'FontSize', 22, 'FontWeight', 'bold');
+title('Market vs MHW Model (Piecewise-Constant Volatility)', 'FontName', 'Times New Roman', 'FontSize', 24, 'FontWeight', 'bold');
+lgd = legend('Location', 'southoutside', 'NumColumns', 4);
+lgd.FontName = 'Times New Roman';
+lgd.FontSize = 16; 
+lgd.Box = 'on';
+lgd.EdgeColor = [0.8 0.8 0.8]; 
+lgd.Color = [0.98 0.98 0.98]; 
 hold off;
 
 end

@@ -120,7 +120,7 @@ gammas = [0; 0.5; 1];
 
 %% 6) Hull-White Tree Pricing
 
-% Extract pseudo-discounting curve reboostrapped with MHW parameters at
+% Extract pseudo-discounting curve re-bootstrapped with MHW parameters at
 % gamma = 0
 pseudoCurve_adj_22 = pseudoCurves_adj_22(1).curve;
 

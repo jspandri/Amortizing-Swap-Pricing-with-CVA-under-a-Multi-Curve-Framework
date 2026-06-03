@@ -3,8 +3,8 @@ function S_fwd = compute_fwd_swap_rate(settlement, expiry, tenor, discountCurve,
 %
 % INPUTS:
 %   settlement      - scalar date representing the valuation date.
-%   expiries        - vector of expiries for the chosen diagonal.
-%   tenors          - vector of tenors for the chosen diagonal.
+%   expiry          - expiry in years.
+%   tenor           - tenor in years.
 %   discountCurve   - struct of discounting (OIS ESTR) curve 
 %                     containing discount factors, zero-rates and
 %                     corresponding dates.
