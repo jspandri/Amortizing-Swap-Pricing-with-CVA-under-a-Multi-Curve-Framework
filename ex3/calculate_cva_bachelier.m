@@ -1,4 +1,4 @@
-function [CVA, EE_profile] = calculate_cva_bachelier(settlement,scheduleSwap, K, ...
+function [CVA, EE_profile,vol_interp] = calculate_cva_bachelier(settlement,scheduleSwap, K, ...
     discountCurve, volData, hazardRate, recoveryRate, past_fixing_rate)
 %   the Credit Value Adjustment (CVA) 
 % for an amortizing swap using a Bachelier pricing model.
@@ -45,7 +45,7 @@ function [CVA, EE_profile] = calculate_cva_bachelier(settlement,scheduleSwap, K,
     
     % 2. EXPECTED EXPOSURE PRICING
     
-    [EE_profile, ~, ~] = price_swap_bachelier(settlement, scheduleSwap,...
+    [EE_profile, ~, ~,vol_interp] = price_swap_bachelier(settlement, scheduleSwap,...
         K, discountCurve, volData, past_fixing_rate);
     
     % 3. CVA CALCULATION

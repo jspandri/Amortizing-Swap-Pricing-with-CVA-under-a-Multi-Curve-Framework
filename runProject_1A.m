@@ -64,9 +64,9 @@ HazardRates                = CDS_spreads / (1 - RecoveryRate);
 NPV_22 = zeros(1,2);
 EE_profile = zeros(length(scheduleSwap_22.payDates),2) ;
 Total_CVA = zeros(1,2);
-
+vol_data_interp=zeros(length(scheduleSwap_22.payDates),2);
 for i = 1:2  
-    [Total_CVA(i), EE_profile(:, i)] = calculate_cva_bachelier(...
+    [Total_CVA(i), EE_profile(:, i),vol_data_interp(:,i)] = calculate_cva_bachelier(...
         settlement_22,scheduleSwap_22,K_strike,discountCurve_22,vol_data_22,HazardRates(i),RecoveryRate);        
  
     NPV_22(i) = NPV_riskfree - Total_CVA(i);
@@ -74,7 +74,7 @@ end
 %plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
 plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile, HazardRates, RecoveryRate, settlement_22, [300, 500]);
 %plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile(:,1), HazardRates(1), RecoveryRate, settlement_22)
-
+plot_interpolated_volatility(scheduleSwap_22.payDates, vol_data_interp(:, 1));
 
 %% 4) Unwinding
 maturity_date_not_adjusted = datenum("28-Jun-2037");
@@ -94,7 +94,6 @@ NPV_RF_23 = swap_riskfree_npv(settlement_23, scheduleSwap_23, K_strike, past_fix
 NPV_23 = zeros(1, 2);
 EE_profile_23 = zeros(length(scheduleSwap_23.payDates), 2);
 Total_CVA_23 = zeros(1, 2);
-
 % Compute CVA and NPV for both CDS spreads
 for i = 1:2
     [Total_CVA_23(i), EE_profile_23(:, i)] = calculate_cva_bachelier(...
