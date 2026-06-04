@@ -1,157 +1,178 @@
 function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     swap_npv_cva_tree(settlement, tree, scheduleSwap, K, HazardRate, RecoveryRate)
-% SWAP_NPV_CVA_TREE
-% Prezzo risk-free e risky di uno swap amortizing nel tree MHW/HW con gamma = 0.
+% SWAP_NPV_CVA_TREE Computes Risk-Free CVA and Risky NPV of an amortizing swap on a HW Tree.
 %
-% Punto di vista BANCA:
-%   riceve floating Euribor 3M
-%   paga fixed K
+% This function performs a backward induction on the full grid to evaluate 
+% the continuous net present value of the swap. It then calculates the 
+% Unilateral Credit Value Adjustment (CVA) over the entire continuous time grid.
 %
-% CVA discretizzata su tutta la griglia del tree:
-%   CVA = LGD * sum_i PD_i * E[D(0,t_i) * max(V_i,0)]
+% BANK'S PERSPECTIVE:
+%   - Receives floating rate (Euribor 3M)
+%   - Pays fixed rate (K)
 %
-% dove V_i e' il valore residuo NETTO del contratto al layer i.
+% CVA FRAMEWORK:
+%   CVA = LGD * sum_i [ PD(t_i, t_i+1) * E[ D(0,t_i) * max(V_i, 0) ] ]
+%
+% INPUTS:
+%   settlement   : [Scalar] Settlement date t0 (datenum).
+%   tree         : [Struct] Tree data structure containing grid arrays, model parameters, 
+%                        discrete branching thresholds, calendar mappings, and deterministic spreads.
+%   scheduleSwap : [Struct] Swap schedule container with active periods:
+%                            - .accrualStart : Period start dates (datenum)
+%                            - .accrualEnd   : Period end dates (datenum)
+%                            - .payDates     : Coupon payment dates (datenum)
+%                            - .notionals    : Active outstanding amortizing notionals
+%                            - .yf_pay       : Year fractions for payment periods (ACT/360)
+%                            - .F_forward    : Forward Libor rates
+%                            - .B_ois        : discounts at payments dates%   K            : [Scalar] Fixed strike rate.
+%   HazardRate   : [Scalar] Constant default intensity (lambda).
+%   RecoveryRate : [Scalar] Recovery rate (R).
+%
+% OUTPUTS:
+%   NPV_rf       : [Scalar] Risk-Free Net Present Value.
+%   PV_float     : [Scalar] Present Value of the Floating Leg.
+%   PV_fixed     : [Scalar] Present Value of the Fixed Leg.
+%   CVA          : [Scalar] Credit Valuation Adjustment.
+%   NPV_risky    : [Scalar] Risky Swap NPV (NPV_rf - CVA).
+%   details      : [Struct] Prices, CVA and exposure profiles.
 
+    % 1. MULTI-CURVE FORWARD QUANTITIES
 
-    % ------------------------------------------------------------
-    % 1) Forward quantities multicurve nodo-per-nodo
-    % ------------------------------------------------------------
+    % Extract pre-computed forward rates and discounts for the schedule
     fwd = node_forward_factors(settlement, tree, scheduleSwap);
-
+    
     notionals = scheduleSwap.notionals(:);
-    nCoupons  = length(fwd.delta);
+    delta     = fwd.delta(:);
+    nCoupons  = length(delta);
 
+    % Handle potential schedule mapping mismatches safely
     if length(notionals) == nCoupons + 1
         notionals = notionals(1:end-1);
     elseif length(notionals) ~= nCoupons
-        error('scheduleSwap.notionals deve avere lunghezza nCoupons o nCoupons+1.');
+        error('scheduleSwap.notionals must have length nCoupons or nCoupons+1.');
     end
-
     notionals = notionals(:);
-    delta     = fwd.delta(:);
 
     nNodes = length(tree.x);
     nCols  = tree.nSteps + 1;
 
-    % ------------------------------------------------------------
-    % 2) Coupon values at reset times, embedded on full grid
-    % ------------------------------------------------------------
+    % 2. CASH FLOW GENERATION
+
+    % Pre-allocate the grid matrices mapping cash flows to specific reset times
     couponFloatAtReset = zeros(nNodes, nCols);
     couponFixedAtReset = zeros(nNodes, nCols);
 
+    % Compute all coupon values across all nodes simultaneously
+    % Weights: [1 x nCoupons] vector of Notional * YearFraction
+    weights = (notionals .* delta)'; 
+    
+    % valFloat_matrix / valFixed_matrix: [nNodes x nCoupons] matrices 
+    valFloat_matrix = fwd.node.L .* fwd.node.B .* weights;
+    valFixed_matrix = fwd.node.B .* (weights * K);
+
+    % Map the generated matrices onto the tree grid timelines
     for k = 1:nCoupons
         idx = fwd.startIdx(k);
-
-        % valore al reset time T_i del coupon pagato a T_{i+1}
-        valFloat_k = notionals(k) * delta(k) * fwd.node.L(:,k) .* fwd.node.B(:,k);
-        valFixed_k = notionals(k) * delta(k) * K              .* fwd.node.B(:,k);
-
-        % se piu' coupon mappano sullo stesso layer, si sommano
-        couponFloatAtReset(:, idx) = couponFloatAtReset(:, idx) + valFloat_k;
-        couponFixedAtReset(:, idx) = couponFixedAtReset(:, idx) + valFixed_k;
+        % If multiple coupons map to the same node layer, they are accumulated (+)
+        couponFloatAtReset(:, idx) = couponFloatAtReset(:, idx) + valFloat_matrix(:, k);
+        couponFixedAtReset(:, idx) = couponFixedAtReset(:, idx) + valFixed_matrix(:, k);
     end
 
+    % Define the net cash flow injection matrix (Bank receives float, pays fixed)
     couponNetAtReset = couponFloatAtReset - couponFixedAtReset;
 
-    % ------------------------------------------------------------
-    % 3) Backward induction on the FULL TREE
-    % ------------------------------------------------------------
+    % 3. BACKWARD INDUCTION ON THE FULL GRID
+
+    % Rollback the future expected values iteratively from maturity to t0
     V_float = backward_value_full_grid(tree, couponFloatAtReset);
     V_fixed = backward_value_full_grid(tree, couponFixedAtReset);
     V_net   = backward_value_full_grid(tree, couponNetAtReset);
 
-    idx0 = tree.l_max + 1;
-
+    % Extract initial values at t=0 (Center node: l_max + 1)
+    idx0     = tree.l_max + 1;
     PV_float = V_float(idx0, 1);
     PV_fixed = V_fixed(idx0, 1);
     NPV_rf   = V_net(idx0, 1);
 
-    % ------------------------------------------------------------
-    % 4) CVA on the whole tree
-    % ------------------------------------------------------------
+    % 4. CVA COMPUTATION 
     LGD = 1 - RecoveryRate;
+    statePrices = tree.fit.statePrices;   % Discounted Arrow-Debreu prices
+    marketDF    = tree.fit.marketDF(:);   % Market OIS discounts P(0, t_i)
 
-    statePrices = tree.fit.statePrices;   % discounted state prices q_{i,j}
-    marketDF    = tree.fit.marketDF(:);   % P(0,t_i)
+    % Generat year fractions for the entire time grid simultaneously (ACT/365)
+    y_grid = yearfrac(settlement, tree.gridDates, 3);
+    
+    % Calculate marginal Default Probabilities for all steps: [nSteps x 1]
+    PDstep = exp(-HazardRate * y_grid(1:end-1)) - exp(-HazardRate * y_grid(2:end));
 
-    discEE = zeros(tree.nSteps, 1);
-    EE     = zeros(tree.nSteps, 1);
-    PDstep = zeros(tree.nSteps, 1);
-    CVA    = 0.0;
+    % Extract the positive exposure profile strictly up to nSteps 
+    % (We exclude nSteps+1 because maturity implies contract expiration)
+    V_net_positive = max(V_net(:, 1:tree.nSteps), 0);
 
-    for i = 1:tree.nSteps
-        t_curr = tree.gridDates(i);
-        t_next = tree.gridDates(i+1);
+    % Compute Discounted Expected Exposure (discEE): E[ D(0,t_i) * max(V_i, 0) ]
+    % Sum over rows (dimension 1) to compress spatial nodes into a time vector
+    discEE = sum(statePrices(:, 1:tree.nSteps) .* V_net_positive, 1)';
 
-        y_curr = yearfrac(settlement, t_curr, 3);
-        y_next = yearfrac(settlement, t_next, 3);
+    % Undiscounted Expected Exposure (EE): E[ max(V_i, 0) ]
+    % Guard against division by zero for extremely small discount factors
+    safe_marketDF = max(marketDF(1:tree.nSteps), 1e-16);
+    EE = discEE ./ safe_marketDF;
 
-        % default probability over [t_i, t_{i+1}] under constant hazard
-        PD_i = exp(-HazardRate * y_curr) - exp(-HazardRate * y_next);
-        PDstep(i) = PD_i;
+    % CVA Calculation
+    CVA = LGD * sum(PDstep .* discEE);
 
-        % discounted expected exposure at t_i
-        discEE_i = sum(statePrices(:, i) .* max(V_net(:, i), 0));
-        discEE(i) = discEE_i;
-
-        % undiscounted expected exposure at t_i (optional diagnostic)
-        if marketDF(i) > 1e-16
-            probs_i = statePrices(:, i) / marketDF(i);
-            EE(i) = sum(probs_i .* max(V_net(:, i), 0));
-        else
-            EE(i) = 0.0;
-        end
-
-        CVA = CVA + LGD * PD_i * discEE_i;
-    end
-
+    % Final Risky Swap Pricing
     NPV_risky = NPV_rf - CVA;
 
-    % ------------------------------------------------------------
-    % 5) Diagnostics
-    % ------------------------------------------------------------
+    % 5. SAVE RESULTS
+
     details = struct();
-
-    details.nCoupons     = nCoupons;
-    details.notionals    = notionals;
-    details.delta        = delta;
-
-    details.forwardData  = fwd;
-
+    details.nCoupons           = nCoupons;
+    details.notionals          = notionals;
+    details.delta              = delta;
+    details.forwardData        = fwd;
     details.couponFloatAtReset = couponFloatAtReset;
     details.couponFixedAtReset = couponFixedAtReset;
     details.couponNetAtReset   = couponNetAtReset;
-
-    details.V_float = V_float;
-    details.V_fixed = V_fixed;
-    details.V_net   = V_net;
-
-    details.PV_float = PV_float;
-    details.PV_fixed = PV_fixed;
-    details.NPV_rf   = NPV_rf;
-
-    details.PDstep   = PDstep;
-    details.discEE   = discEE;     % E[D(0,t_i) V_i^+]
-    details.EE       = EE;         % E[V_i^+]
-    details.CVA      = CVA;
-    details.NPV_risky = NPV_risky;
+    details.V_float            = V_float;
+    details.V_fixed            = V_fixed;
+    details.V_net              = V_net;
+    details.PV_float           = PV_float;
+    details.PV_fixed           = PV_fixed;
+    details.NPV_rf             = NPV_rf;
+    
+    % Store CVA diagnostic profiles
+    details.PDstep             = PDstep;
+    details.discEE             = discEE; % Discounted Expected Exposure
+    details.EE                 = EE;     % Undiscounted Expected Exposure
+    details.CVA                = CVA;
+    details.NPV_risky          = NPV_risky;
 end
 
-
+% =============================================================================
+% HELPER FUNCTION: BACKWARD INDUCTION
+% =============================================================================
 function V = backward_value_full_grid(tree, cashflowsAtGridTime)
-% BACKWARD_VALUE_FULL_GRID
-% cashflowsAtGridTime(:,i) e' un valore al tempo t_i gia' espresso al layer i.
-% La backward induction calcola il valore residuo in ogni nodo e layer.
+% BACKWARD_VALUE_FULL_GRID Propagates future cash flows backwards through the lattice.
+%
+% INPUTS:
+%   tree                : [Struct] Tree data structure containing grid arrays, model parameters, 
+%                                   discrete branching thresholds, calendar mappings, and deterministic spreads.
+%   cashflowsAtGridTime : [Matrix, nNodes x nSteps+1] Local cash flows to inject.
+%
+% OUTPUTS:
+%   V                   : [Matrix, nNodes x nSteps+1] Residual value array.
 
     nNodes = length(tree.x);
     nSteps = tree.nSteps;
 
-    if size(cashflowsAtGridTime,1) ~= nNodes || size(cashflowsAtGridTime,2) ~= nSteps+1
-        error('Dimensioni di cashflowsAtGridTime non coerenti col tree.');
+    if size(cashflowsAtGridTime, 1) ~= nNodes || size(cashflowsAtGridTime, 2) ~= nSteps + 1
+        error('cashflowsAtGridTime dimensions are inconsistent with the tree grid.');
     end
 
     V = zeros(nNodes, nSteps + 1);
 
+    % Extract transition probabilities and destinations directly
     pu  = tree.fit.probUp;
     pm  = tree.fit.probMid;
     pd  = tree.fit.probDn;
@@ -160,10 +181,14 @@ function V = backward_value_full_grid(tree, cashflowsAtGridTime)
     mid = tree.fit.destMid;
     dn  = tree.fit.destDn;
 
-    nodeDF = tree.fit.nodeDF;
+    nodeDF = tree.fit.nodeDF; % Calibrated local discount factors
 
+    % Iterate backwards from maturity to present
     for i = nSteps:-1:1
+        % Compute expected continuation value
         cont = pu .* V(up, i+1) + pm .* V(mid, i+1) + pd .* V(dn, i+1);
+        
+        % Value at current node = Local injected cash flow + Discounted continuation
         V(:, i) = cashflowsAtGridTime(:, i) + nodeDF(:, i) .* cont;
     end
 end

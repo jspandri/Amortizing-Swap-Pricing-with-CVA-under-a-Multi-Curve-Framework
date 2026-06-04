@@ -123,38 +123,34 @@ gammas = [0; 0.5; 1];
 % Re-Bootstrap with convexity adjustment
 [pseudoCurves_adj_22] = rebootstrap_convexity_adjustment(euriborSet_22, estrSet_22, pseudoCurve_22, gammas, results_const);
 
-%% 6) Hull-White Tree Pricing
+%% 6) Hull-White Tree Pricing and CVA Convergence Analysis
 
-% Extract pseudo-discounting curve re-bootstrapped with MHW parameters at
-% gamma = 0
+% Retrieve the pseudo-discounting curve re-bootstrapped with MHW parameters (gamma = 0)
 pseudoCurve_adj_22 = pseudoCurves_adj_22(1).curve;
 
-
 % Calibrated Hull-White parameters (from Point 5)
-a_param             = results_const(1).a;      % Mean reversion speed
-sigma_const         = results_const(1).sigma;  % Scalar constant volatility
+a_param     = results_const(1).a;      % Mean reversion speed (alpha)
+sigma_const = results_const(1).sigma;  % Constant volatility (sigma)
 
-% Discretization levels (Time steps per year)
+% Define discretization levels (Time steps per year) for convergence analysis
 precision_levels = [4, 12, 52, 365]; 
 
-% Pricing of an amortizing swap under a multi-curve Hull-White model. We compare 
-% a Constant Volatility calibration vs a Piecewise Constant Volatility calibration 
-% across different discretization grid levels, for two CDS profiles.
+% 1. Pricing for CDS Spread = 300 bps
+res_tree_300 = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_const,...
+    K_strike, settlement_22, scheduleSwap_22, precision_levels, RecoveryRate, ...
+    HazardRates(1), discountCurve_22, pseudoCurve_adj_22);
 
-
-res_tree_300 = run_hw_pricing_amortizing_swap_CVA( ...
-    a_param, sigma_const, K_strike, settlement_22, ...
-    scheduleSwap_22, precision_levels, RecoveryRate, HazardRates(1), ...
-    discountCurve_22, pseudoCurve_adj_22);
-
-disp('--> Results CDS Spread = 300bps');
+fprintf('--> Results for CDS Spread = 300bps\n');
 disp(struct2table(res_tree_300));
 
-res_tree_500 = run_hw_pricing_amortizing_swap_CVA( ...
-    a_param, sigma_const, K_strike, settlement_22, ...
-    scheduleSwap_22, precision_levels, RecoveryRate, HazardRates(2), ...
-    discountCurve_22, pseudoCurve_adj_22);
+% 2. Pricing for CDS Spread = 500 bps
+res_tree_500 = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_const, ...
+    K_strike, settlement_22, scheduleSwap_22, precision_levels, RecoveryRate, ...
+    HazardRates(2), discountCurve_22, pseudoCurve_adj_22);
 
-disp('--> Results CDS Spread = 500bps');
+fprintf('--> Results for CDS Spread = 500bps\n');
 disp(struct2table(res_tree_500));
 
+% Generate convergence plots 
+fig300 = plot_hw_convergence(res_tree_300, 300);
+fig500 = plot_hw_convergence(res_tree_500, 500);
