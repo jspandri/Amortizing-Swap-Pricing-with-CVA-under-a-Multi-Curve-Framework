@@ -1,5 +1,6 @@
-function results_struct = run_hw_pricing_amortizing_swap_CVA(a, sigma, sigma_times,K, ...
-    startDate, scheduleSwap, precision_levels, RecoveryRate, HazardRate, ois_curve, eur_curve)
+function results_struct = run_hw_pricing_amortizing_swap_CVA( ...
+    a, sigma, K, startDate, scheduleSwap, precision_levels, ...
+    RecoveryRate, HazardRate, discountCurve, pseudoCurve)
 % RUN_HW_PRICING_AMORTIZING_SWAP_CVA Manages the convergence loop for pricing.
 %
 % This function manages the entire workflow: it constructs the uniform 
@@ -35,78 +36,31 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA(a, sigma, sigma_tim
 %                                  .CVA                  [Vector] Credit Valuation Adjustment values.
 %                                  .Risky_Swap_Price     [Vector] Final prices including default risk.
 
-    % 1. INITIALIZATION
-    
-    % Determine the number of convergence levels based on the precision input
     n_levels = length(precision_levels);
-    
-    % Initialize storage vectors for prices, CVA, and grid dimension tracking
+
     prices_clean = zeros(n_levels, 1);
-    CVA = zeros(n_levels, 1);
-    prices = zeros(n_levels, 1);
-    num_nodes = zeros(n_levels, 1);
-    
-    % Extract payment dates 
-    paymentDates = scheduleSwap.payDates;
-     
-    % Set the final maturity date (it's the last calculated payment date)
-    maturityDate = paymentDates(end);
-    
-    % 2. BASE VOLATILITY FOR TREE GEOMETRY
-    % Calculate the mean of the sigma array to build an uniformly spaced tree grid
-    % If sigma is scalar, the mean coincide with sigma
-    sigma_base = mean(sigma);
-   
-    % 3. CONVERGENCE LOOP
-    % Iterate through each requested precision level to evaluate model numerical stability
+    CVA          = zeros(n_levels, 1);
+    prices       = zeros(n_levels, 1);
+    num_steps    = zeros(n_levels, 1);
+
     for j = 1:n_levels
-        
-        % Extract the number of time steps per year for the current iteration
+
         stepsPerYear = precision_levels(j);
-        
-        % A. GRID CONSTRUCTION
-        % Generate a uniform time grid array and the time step size (dt)
-        [~, grid_dates, dt] = build_hw_time_grid(startDate, maturityDate, stepsPerYear);
-        
-        % Store the total number of nodes generated for the current grid resolution
-        num_nodes(j) = length(grid_dates);
-        
-        % B. TREE PARAMETER CALCULATION
-        % Compute Hull-White analytical parameter sigma_hat using the averaged base volatility
-        sigma_hat = sigma_base * sqrt((1 - exp(-2 * a * dt)) / (2 * a));
-        
-        % Calculate the spatial step size (dx) required to keep the tree stable
-        dx = sigma_hat * sqrt(3); 
-        
-        % Calculate the deterministic drift adjustment term
-        mu_hat = 1 - exp(-a * dt);
-        
-        % Calculate the maximum spatial index (l_max) to ensure boundary conditions are satisfied
-        l_max = ceil((1 - sqrt(2/3)) / mu_hat);
-        
-        % C. PRICING EXECUTION
-        % Invoke the backward induction tree pricer
-        [prices(j), prices_clean(j), CVA(j)] = price_swap_CVA(a, sigma, sigma_times, K, ...
-            dt, grid_dates, l_max, dx, mu_hat, startDate, ois_curve, eur_curve, ...
-            scheduleSwap, RecoveryRate, HazardRate);
+
+        [NPV_risky, NPV_rf, CVA_val, ~, tree] = price_swap_CVA_tree( ...
+            a, sigma, K, startDate, scheduleSwap, stepsPerYear, ...
+            RecoveryRate, HazardRate, discountCurve, pseudoCurve);
+
+        prices_clean(j) = NPV_rf;
+        CVA(j)          = CVA_val;
+        prices(j)       = NPV_risky;
+        num_steps(j)    = tree.nSteps;
     end
-    
-    % 4. RESULTS PACKAGING
-    % Initialize the output structured object
+
     results_struct = struct();
-    
-    % Store the tested precision levels
-    results_struct.Steps_Per_Year = precision_levels(:);
-    
-    % Store the corresponding total time steps computed
-    results_struct.Total_Time_Steps = num_nodes(:);
-    
-    % Store the computed Risk-Free Swap Prices
+    results_struct.Steps_Per_Year       = precision_levels(:);
+    results_struct.Total_Time_Steps     = num_steps(:);
     results_struct.Risk_free_Swap_Price = prices_clean(:);
-    
-    % Store the computed Credit Value Adjustments
-    results_struct.CVA = CVA(:);
-    
-    % Store the computed Risky Swap Prices
-    results_struct.Risky_Swap_Price = prices(:);
+    results_struct.CVA                  = CVA(:);
+    results_struct.Risky_Swap_Price     = prices(:);
 end

@@ -129,19 +129,32 @@ gammas = [0; 0.5; 1];
 % gamma = 0
 pseudoCurve_adj_22 = pseudoCurves_adj_22(1).curve;
 
+
 % Calibrated Hull-White parameters (from Point 5)
 a_param             = results_const(1).a;      % Mean reversion speed
 sigma_const         = results_const(1).sigma;  % Scalar constant volatility
-sigma_pwc           = results_pwc(1).sigmas;   % Piecewise Constant volatility
-sigma_times         = diag_expiries;           % Calibration buckets in years
 
 % Discretization levels (Time steps per year)
-precision_levels = [1, 4, 12, 52, 365]; 
+precision_levels = [4, 12, 52, 365]; 
 
 % Pricing of an amortizing swap under a multi-curve Hull-White model. We compare 
 % a Constant Volatility calibration vs a Piecewise Constant Volatility calibration 
 % across different discretization grid levels, for two CDS profiles.
-[res_300_const, res_500_const, res_300_pwc, res_500_pwc] = execute_project_point6(...
-    a_param, sigma_const, sigma_pwc, sigma_times, K_strike, settlement_22, ...
-    scheduleSwap_22, precision_levels, RecoveryRate, HazardRates, ...
+
+
+res_tree_300 = run_hw_pricing_amortizing_swap_CVA( ...
+    a_param, sigma_const, K_strike, settlement_22, ...
+    scheduleSwap_22, precision_levels, RecoveryRate, HazardRates(1), ...
     discountCurve_22, pseudoCurve_adj_22);
+
+disp('--> Results CDS Spread = 300bps');
+disp(struct2table(res_tree_300));
+
+res_tree_500 = run_hw_pricing_amortizing_swap_CVA( ...
+    a_param, sigma_const, K_strike, settlement_22, ...
+    scheduleSwap_22, precision_levels, RecoveryRate, HazardRates(2), ...
+    discountCurve_22, pseudoCurve_adj_22);
+
+disp('--> Results CDS Spread = 500bps');
+disp(struct2table(res_tree_500));
+
