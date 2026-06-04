@@ -97,9 +97,14 @@ function [EE_profile, S_iw_profile, BPV_iw_profile,vol_exact_profile] = price_sw
     target_BPV_norm(valid_bpv_mask) = BPV_iw_profile(valid_bpv_mask) ./ N_current(valid_bpv_mask);
     
     % Extract mapped Bachelier volatilities
-    vol_exact_profile = get_interpolated_vol_bpv_matching(settlement, ...
-       fixingDates, target_BPV_norm, volData, discountCurve);
-    
+     vol_exact_profile = get_interpolated_vol_bpv_matching(settlement,fixingDates, target_BPV_norm, volData, discountCurve);
+
+    % WE have computed Also with direct BPV interpolation the results are
+    % equal similar in time and in results , but with big matrices interp2
+    % is better (our case 60)
+     %vol_exact_profile= get_interpolated_vol_direct_bpv(settlement, fixingDates, target_BPV_norm, volData, discountCurve);
+
+
     % BACHELIER EXPOSURE COMPUTATION
     
     % Isolate active future nodes

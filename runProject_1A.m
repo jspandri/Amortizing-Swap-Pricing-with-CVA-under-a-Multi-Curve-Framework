@@ -65,12 +65,14 @@ NPV_22 = zeros(1,2);
 EE_profile = zeros(length(scheduleSwap_22.payDates),2) ;
 Total_CVA = zeros(1,2);
 vol_data_interp=zeros(length(scheduleSwap_22.payDates),2);
+
 for i = 1:2  
     [Total_CVA(i), EE_profile(:, i),vol_data_interp(:,i)] = calculate_cva_bachelier(...
-        settlement_22,scheduleSwap_22,K_strike,discountCurve_22,vol_data_22,HazardRates(i),RecoveryRate);        
- 
+        settlement_22,scheduleSwap_22,K_strike,discountCurve_22,vol_data_22,HazardRates(i),RecoveryRate);
+
     NPV_22(i) = NPV_riskfree - Total_CVA(i);
 end
+
 %plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
 plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile, HazardRates, RecoveryRate, settlement_22, [300, 500]);
 %plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile(:,1), HazardRates(1), RecoveryRate, settlement_22)
