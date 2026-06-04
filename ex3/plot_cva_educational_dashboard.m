@@ -45,7 +45,8 @@ function plot_cva_educational_dashboard(payDates, EE_profiles, hazardRates, reco
     end
     
     % Figure Creation
-    figure('Name', 'CVA Educational Dashboard', 'Position', [100, 100, 1200, 800], 'Color', 'w');
+    figure('Name', 'CVA Educational Dashboard', 'Position', [150, 150, 900, 600], 'Color', 'w');
+
     
     % Colors for the plots (Blue and Red themes for contrast)
     colors = [0, 0.4470, 0.7410;   % Deep Blue
