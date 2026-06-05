@@ -1,23 +1,21 @@
 function pseudoCurves_adj = rebootstrap_convexity_adjustment(euriborSet, estrSet, pseudoCurve_base, gammas, results_const)
-% Starting from calibrated MHW parameters, rebootstraps the curves taking
-% into account the convexity adjustments on futures. Returns as struct the
-% bootstrapped pseudo-discounting curves with different values of gamma.
-% Prints and plots the differences with respect to the unadjusted curve.
+% REBOOTSTRAP_CONVEXITY_ADJUSTMENT Starting from calibrated MHW parameters, rebootstraps the curves taking into account the convexity adjustments on futures. 
+% Returns as struct the bootstrapped pseudo-discounting curves with different values of gamma. Prints and plots the differences with respect to the unadjusted curve.
 %
 % INPUTS:
-%   euriborSet          - struct containing Euribor3m rates and dates of
-%                         corresponding instruments.
-%   estrSet             - struct containing OIS ESTR rates and dates of
-%                         corresponding instruments.
-%   pseudoCurve_base    - unadjusted pseudo-discounting bootstrapped curve.
-%   gammas              - vector of gammas considered in MHW calibration.
-%   results_conts       - calibrated MHW parameters for different fixed
-%                         gamma values
+%   euriborSet                 : [Struct] struct containing Euribor3m rates and dates of
+%                                         corresponding instruments.
+%   estrSet                    : [Struct] struct containing OIS ESTR rates and dates of
+%                                         corresponding instruments.
+%   pseudoCurve_base           : [Struct] unadjusted pseudo-discounting bootstrapped curve.
+%   gammas                     : [Vector] vector of gammas considered in MHW calibration.
+%   results_const              : [Struct] calibrated MHW parameters for different fixed
+%                                         gamma values.
 %
 % OUTPUTS:
-%   pseudoCurves_adj    - Struct containing rebootstrapped
-%                         pseudo-discounting curves with convexity adjustment.
-
+%   pseudoCurves_adj           : [Struct] Struct containing rebootstrapped pseudo-discounting curves with convexity adjustment:
+%                                  - .gamma : gamma value used
+%                                  - .curve : rebootstrapped pseudo-discounting curve
 
 n_gammas = length(gammas);
     

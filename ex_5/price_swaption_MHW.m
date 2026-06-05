@@ -1,24 +1,25 @@
 function price_MHW = price_swaption_MHW(settlement, a, sigma, gamma, expiry, tenor, strike, discountCurve, pseudoCurve)
-% Price cash-settled swaptions via MHW (Multi-curve Hull-White) model.
+% PRICE_SWAPTION_MHW Price cash-settled swaptions via MHW (Multi-curve Hull-White) model.
 %
 % INPUTS:
-%   settlement      - settlement date.
-%   a               - mean reversion parameter.
-%   sigma           - volatility parameter.
-%   gamma           - gamma parameter.
-%   expiry          - swaption expiry (in years).
-%   tenor           - swap tenor (in years).
-%   strike          - strike value.
-%   discountCurve   - struct of discounting (OIS ESTR) curve 
-%                     containing discount factors, zero-rates and
-%                     corresponding dates.
-%   pseudoCurve     - struct of pseudo-discounting (Euribor3m) curve 
-%                     containing discount factors, zero-rates and
-%                     corresponding dates.
+%   settlement                 : [Scalar/Datetime] settlement date.
+%   a                          : [Scalar] mean reversion parameter.
+%   sigma                      : [Scalar] volatility parameter.
+%   gamma                      : [Scalar] gamma parameter.
+%   expiry                     : [Scalar] swaption expiry (in years).
+%   tenor                      : [Scalar] swap tenor (in years).
+%   strike                     : [Scalar] strike value.
+%   discountCurve              : [Struct] struct of discounting (OIS ESTR) curve containing:
+%                                  - .discounts : discount factors
+%                                  - .zeroRates : zero-rates
+%                                  - .dates     : corresponding dates
+%   pseudoCurve                : [Struct] struct of pseudo-discounting (Euribor3m) curve containing:
+%                                  - .discounts : discount factors
+%                                  - .zeroRates : zero-rates
+%                                  - .dates     : corresponding dates
 %
 % OUTPUTS:
-%   price_MHW       - computed swaption price.
-
+%   price_MHW                  : [Scalar] computed swaption price.
 % Extract discount factors and corresponding dates
 discounts = discountCurve.discounts;
 dates = discountCurve.dates;

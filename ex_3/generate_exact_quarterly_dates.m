@@ -24,7 +24,7 @@ function pay_dates_bullet_mat = generate_exact_quarterly_dates(expiry_date, num_
     % Dummy holidays (weekends only) to replicate standard market conventions
     holidays = datenum("01-Jan-2000");
 
-    % --- 1. Data Sanitization (Error Prevention) ---
+    % Data Sanitization (Error Prevention) 
     expiry_date = expiry_date(:);
     
     if iscell(expiry_date)

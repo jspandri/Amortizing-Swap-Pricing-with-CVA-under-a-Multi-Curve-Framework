@@ -1,22 +1,23 @@
 function mkt_prices = price_swaption_bachelier(settlement, discountCurve, pseudoCurve, strike, expiries, tenors, sigmas)
-% Price cash-settled swaptions via Bachelier (normal) model (works with
-% vectors of expiries, tenors and sigmas).
+% PRICE_SWAPTION_BACHELIER Price cash-settled swaptions via Bachelier (normal) model (works with vectors of expiries, tenors and sigmas).
 %
-%   settlement      - settlement date.
-%   discountCurve   - struct of discounting (OIS ESTR) curve 
-%                     containing discount factors, zero-rates and
-%                     corresponding dates.
-%   pseudoCurve     - struct of pseudo-discounting (Euribor3m) curve 
-%                     containing discount factors, zero-rates and
-%                     corresponding dates.
-%   strike          - strike value.
-%   expiries        - vector of expiries for the chosen diagonal.
-%   tenors          - vector of tenors for the chosen diagonal.
-%   sigmas          - vector of implied normal volatilities.
+% INPUTS:
+%   settlement                 : [Scalar/Datetime] settlement date.
+%   discountCurve              : [Struct] struct of discounting (OIS ESTR) curve containing:
+%                                  - .discounts : discount factors
+%                                  - .zeroRates : zero-rates
+%                                  - .dates     : corresponding dates
+%   pseudoCurve                : [Struct] struct of pseudo-discounting (Euribor3m) curve containing:
+%                                  - .discounts : discount factors
+%                                  - .zeroRates : zero-rates
+%                                  - .dates     : corresponding dates
+%   strike                     : [Scalar] strike value.
+%   expiries                   : [Vector] vector of expiries for the chosen diagonal.
+%   tenors                     : [Vector] vector of tenors for the chosen diagonal.
+%   sigmas                     : [Vector] vector of implied normal volatilities.
 %
 % OUTPUTS:
-%   mkt_prices      - vector of reconstructed market prices for the diagonal.
-
+%   mkt_prices                 : [Vector] vector of reconstructed market prices for the diagonal.
 
 % Compute expiry dates and corresponding discounts
 expiry_dates = following_day_convention(settlement, 0, mod(expiries*12, 12), floor(expiries), 1, true);

@@ -1,32 +1,45 @@
 function [results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaption_model(settlement, discountCurve, pseudoCurve, vol_data, diag_expiries, diag_tenors, gammas)
-% Calibrates MHW (multi-curve Hull-White) parameters [a, sigma], via 
-% Swaptions, given set of fixed values of gamma and a chosen diagonal of
-% expiries and tenors.
+% CALIBRATE_MULTICURVE_SWAPTION_MODEL Calibrates MHW (multi-curve Hull-White) parameters [a, sigma], via Swaptions, given set of fixed values of gamma and a chosen diagonal of expiries and tenors.
 %
 %   1) Starting from implied volatilities of Swaptions under Bachelier (normal)
-%   model, reconstructs market prices. 
+%      model, reconstructs market prices. 
 %   2) Calibrates MHW parameters in two scenarios: 
 %       a) Constant parameters
 %       b) Piecewise constant sigma (time dependent)
 %
 % INPUTS:
-%   settlement      - settlement date.
-%   discountCurve   - struct containing discount factors, zero-rates, 
-%                     and dates for the OIS curve.
-%   pseudoCurve     - struct containing discount factors, zero-rates, 
-%                     and dates for the Euribor curve.
-%   vol_data        - struct containing swaption volatility matrix, 
-%                     strike, expiries, and tenors.
-%   diag_expiries   - vector of expiries for the chosen diagonal.
-%   diag_tenors     - vector of tenors for the chosen diagonal.
-%   gammas          - vector of fixed gamma values.
+%   settlement                 : [Scalar/Datetime] settlement date.
+%   discountCurve              : [Struct] struct containing discount factors, zero-rates, and dates for the OIS curve:
+%                                  - .discounts  : discount factors
+%                                  - .zeroRates  : zero-rates
+%                                  - .dates      : dates for the OIS curve
+%   pseudoCurve                : [Struct] struct containing discount factors, zero-rates, and dates for the Euribor curve:
+%                                  - .discounts  : discount factors
+%                                  - .zeroRates  : zero-rates
+%                                  - .dates      : dates for the Euribor curve
+%   vol_data                   : [Struct] struct containing swaption volatility matrix, strike, expiries, and tenors:
+%                                  - .vol_matrix : swaption volatility matrix
+%                                  - .strike     : strike
+%                                  - .expiries   : expiries
+%                                  - .tenors     : tenors
+%   diag_expiries              : [Vector] vector of expiries for the chosen diagonal.
+%   diag_tenors                : [Vector] vector of tenors for the chosen diagonal.
+%   gammas                     : [Vector] vector of fixed gamma values.
 %
 % OUTPUTS:
-%   results_const   - struct containing calibrated parameters (a, sigma),
-%                     gamma, resnorm and model prices for constant volatility.
-%   results_pwc     - struct containing calibrated parameters (a_fixed, sigmas),
-%                     gamma, SSE, and model prices for piecewise constant volatility.
-%   mkt_prices      - vector of reconstructed market prices for the diagonal.
+%   results_const              : [Struct] struct containing calibrated parameters (a, sigma), gamma, resnorm and model prices for constant volatility:
+%                                  - .a            : calibrated parameter a
+%                                  - .sigma        : calibrated parameter sigma
+%                                  - .gamma        : fixed gamma value
+%                                  - .resnorm      : resnorm
+%                                  - .model_prices : model prices
+%   results_pwc                : [Struct] struct containing calibrated parameters (a_fixed, sigmas), gamma, SSE, and model prices for piecewise constant volatility:
+%                                  - .a            : fixed parameter a
+%                                  - .sigmas       : calibrated piecewise constant sigmas
+%                                  - .gamma        : fixed gamma value
+%                                  - .SSE          : sum of squared errors
+%                                  - .model_prices : model prices
+%   mkt_prices                 : [Vector] vector of reconstructed market prices for the diagonal.
 
 % Extract volatility data
 vol_matrix = vol_data.vol_matrix;

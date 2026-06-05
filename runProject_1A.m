@@ -13,7 +13,7 @@ close all;
 clc;
 
 addpath("utilities\")
-addpath("data\","ex2\","ex3\","ex_4\","ex_6\")
+addpath("data\","ex_1","ex_2\","ex_3\","ex_4\","ex_5","ex_6\")
 
 %% Read data
 
@@ -75,7 +75,7 @@ end
 
 %plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
 plot_cva_dashboard(scheduleSwap_22.payDates, EE_profile, HazardRates, RecoveryRate, settlement_22, [300, 500]);
-%plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile(:,1), HazardRates(1), RecoveryRate, settlement_22)
+%plot_cva_dashboard(scheduleSwap_22.payDates, EE_profile(:,1), HazardRates(1), RecoveryRate, settlement_22)
 plot_interpolated_volatility(scheduleSwap_22.payDates, vol_data_interp(:, 1));
 
 %% 4) Unwinding
@@ -85,8 +85,6 @@ notional_amortized = scheduleSwap_22.notionals;
 past_fixing_rate = 0.02141;
 
 % Generate the swap schedule starting from the new settlement date
-%scheduleSwap_23 = generate_swap_schedule(settlement_23, settlement_22, ...
-   % maturity_date_not_adjusted, notional_amortized, discountCurve_23, pseudoCurve_23);
 scheduleSwap_23 = generate_active_swap_schedule(settlement_23, rawSchedule_Excel, discountCurve_23, pseudoCurve_23);
 
 % Compute the Risk-Free Net Present Value (NPV) at the unwinding date

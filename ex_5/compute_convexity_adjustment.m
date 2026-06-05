@@ -1,17 +1,15 @@
 function gamma_tilda = compute_convexity_adjustment(a, sigma, gamma, t_start, t_end)
-% Computes the convexity adjustment gamma term for STIR futures (fully vectorized)
-% under the Multi-Curve Hull-White (MHW) model.
+% COMPUTE_CONVEXITY_ADJUSTMENT Computes the convexity adjustment gamma term for STIR futures (fully vectorized) under the Multi-Curve Hull-White (MHW) model.
 %
 % INPUTS:
-%   a                   - HW mean reversion parameter.
-%   sigma               - HW volatility parameter.
-%   gamma               - MHW spread parameter.
-%   t_start             - yearfrac of futures' start date.
-%   t_end               - yearfrac of futures' end date.
+%   a                          : [Scalar] HW mean reversion parameter.
+%   sigma                      : [Scalar] HW volatility parameter.
+%   gamma                      : [Scalar] MHW spread parameter.
+%   t_start                    : [Vector] yearfrac of futures' start date.
+%   t_end                      : [Vector] yearfrac of futures' end date.
 %
 % OUTPUTS:
-%   gamma_tilda           - convexity adjustment gamma term.
-
+%   gamma_tilda                : [Vector] convexity adjustment gamma term.
 % Discounting curve volatility
 sigma_hat = (1 - gamma) * sigma;
 

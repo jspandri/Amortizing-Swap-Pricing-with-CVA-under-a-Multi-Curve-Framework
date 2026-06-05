@@ -1,19 +1,21 @@
 function S_fwd = compute_fwd_swap_rate(settlement, expiry, tenor, discountCurve, pseudoCurve)
-% Compute the forward swap rate for a given set of expiries and tenors.
+% COMPUTE_FWD_SWAP_RATE Compute the forward swap rate for a given set of expiries and tenors.
 %
 % INPUTS:
-%   settlement      - scalar date representing the valuation date.
-%   expiry          - expiry in years.
-%   tenor           - tenor in years.
-%   discountCurve   - struct of discounting (OIS ESTR) curve 
-%                     containing discount factors, zero-rates and
-%                     corresponding dates.
-%   pseudoCurve     - struct of pseudo-discounting (Euribor3m) curve 
-%                     containing discount factors, zero-rates and
-%                     corresponding dates.
+%   settlement                 : [Scalar/Datetime] scalar date representing the valuation date.
+%   expiry                     : [Scalar/Vector] expiry in years.
+%   tenor                      : [Scalar/Vector] tenor in years.
+%   discountCurve              : [Struct] struct of discounting (OIS ESTR) curve containing:
+%                                  - .discounts : discount factors
+%                                  - .zeroRates : zero-rates
+%                                  - .dates     : corresponding dates
+%   pseudoCurve                : [Struct] struct of pseudo-discounting (Euribor3m) curve containing:
+%                                  - .discounts : discount factors
+%                                  - .zeroRates : zero-rates
+%                                  - .dates     : corresponding dates
 %
 % OUTPUTS:
-%   S_fwd           - vector of computed forward swap rates.
+%   S_fwd                      : [Vector] vector of computed forward swap rates.
 
 expiry_date = following_day_convention(settlement, 0, 0, expiry, 1, true);
 
