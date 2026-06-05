@@ -27,7 +27,7 @@ function [pu, pm, pd, idx_u, idx_m, idx_d] = compute_tree_geometry(x_grid, l_max
     % Define an index mask for all interior nodes, excluding the extreme boundaries
     idx_A = 2 : N_nodes - 1;
     
-    % 1. COMPUTE TRANSITION PROBABILITIES
+    % COMPUTE TRANSITION PROBABILITIES
 
     M = l * mu_hat;
     
@@ -46,12 +46,12 @@ function [pu, pm, pd, idx_u, idx_m, idx_d] = compute_tree_geometry(x_grid, l_max
     pm(end) = -1/3 - M(end)^2 + 2 * M(end); 
     pd(end) = 1/6 + 0.5 * (M(end)^2 - M(end));
 
-    % 2. DETERMINE TARGET CENTER NODES (Relative k_idx)
+    % DETERMINE TARGET CENTER NODES (Relative k_idx)
     k_idx(idx_A) = l(idx_A);
     k_idx(1) = -l_max + 1;
     k_idx(end) = l_max - 1;
     
-    % 3. MAP TO 1-BASED MATLAB INDICES
+    % MAP TO 1-BASED MATLAB INDICES
     idx_u = k_idx + 1 + l_max + 1; % indices for up-branch targets
     idx_m = k_idx + l_max + 1;     % indices for mid-branch targets
     idx_d = k_idx - 1 + l_max + 1; % indices for down-branch targets

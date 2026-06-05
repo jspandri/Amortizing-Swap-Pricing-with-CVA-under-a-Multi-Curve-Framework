@@ -37,7 +37,7 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
 %   price_clean        : [Scalar] Risk-free clean price obtained from tree rollback.
 %   CVA                : [Scalar] Credit Value Adjustment computed via backward induction.
 
-    % 0. EXTRACT USEFUL SWAP PARAMETERS
+    % EXTRACT USEFUL SWAP PARAMETERS
 
     payment_dates = scheduleSwap.payDates;
     accrual_start  = scheduleSwap.accrualStart;
@@ -45,7 +45,7 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
     yf_pay  = scheduleSwap.yf_pay;
     notional_amortized  = scheduleSwap.notionals;
 
-    % 1. PRE-COMPUTATIONS & TIMING MAPS
+    % PRE-COMPUTATIONS & TIMING MAPS
     
     % Calculate the total number of time steps in the tree
     N_steps = length(grid_dates) - 1; 
@@ -111,7 +111,7 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
     B0_acc_start = get_discount_factor_by_zero_rates_linear_interp(...
                 start_date, accrual_start, ois_dates, ois_discounts);
    
-    % 2. INITIALIZE TREE VECTORS AT MATURITY (t = T_max) 
+    % INITIALIZE TREE VECTORS AT MATURITY (t = T_max) 
 
     % Initialize the CVA tree vector at maturity to zero (no future exposure left)
     CVA_tree = zeros(N_nodes, 1);
@@ -122,7 +122,7 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
     % Precompute the tree branching geometry (up, mid, down probabilities and targeted indices)
     [p_u, p_m, p_d, idx_u, idx_m, idx_d] = compute_tree_geometry(x_grid, l_max, mu_hat);
 
-    % 3. BACKWARD INDUCTION LOOP
+    % BACKWARD INDUCTION LOOP
     
     % Step backwards from the maturity of the tree down to the root node (t=0)
     for i = N_steps:-1:1
@@ -197,7 +197,7 @@ function [price, price_clean, CVA] = price_swap_CVA(a, sigma, sigma_times,...
         CVA_tree = CVA_tree + (1 - RecoveryRate) * PD_i * max(V, 0);
     end
 
-    % 4. FINAL ASSIGNMENT AT t=0 (Center Node l=0)
+    % FINAL ASSIGNMENT AT t=0 (Center Node l=0)
     
     % The center node index corresponds to l = 0 (no spatial displacement)
     center_idx = l_max + 1;

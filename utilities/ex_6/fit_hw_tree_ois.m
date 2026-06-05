@@ -33,7 +33,7 @@ function tree = fit_hw_tree_ois(settlement, tree)
     % Extract the market discounting curve
     discCurve = tree.discountCurve;
 
-    % 1. EXTRACT MARKET DISCOUNT FACTORS P(0, t_i)
+    % EXTRACT MARKET DISCOUNT FACTORS P(0, t_i)
     
     % Interpolate market OIS zero rates to find the discount factors for every grid date
     marketDF = get_discount_factor_by_zero_rates_linear_interp( ...
@@ -47,7 +47,7 @@ function tree = fit_hw_tree_ois(settlement, tree)
         error('marketDF must have length nSteps+1.');
     end
 
-    % 2. TREE GEOMETRY & TRANSITION PROBABILITIES
+    % TREE GEOMETRY & TRANSITION PROBABILITIES
     
     % Pre-allocate transition destination indices and probability vectors
     destUp  = zeros(nNodes, 1);
@@ -106,7 +106,7 @@ function tree = fit_hw_tree_ois(settlement, tree)
         error('Negative probabilities detected in the tree: check l_max and mu_hat.');
     end
 
-    % 3. BUILD SPARSE TRANSITION MATRIX
+    % BUILD SPARSE TRANSITION MATRIX
     
     % We construct a sparse transition matrix Pi such that Pi(j, k) is the
     % probability of moving from node j to node k.
@@ -117,7 +117,7 @@ function tree = fit_hw_tree_ois(settlement, tree)
     % Pi is a [nNodes x nNodes] matrix.
     TransitionMatrix = sparse(row_indices, col_indices, prob_values, nNodes, nNodes);
    
-    % 4. FORWARD INDUCTION 
+    % FORWARD INDUCTION 
 
     % Initialize the state prices matrix (q)
     statePrices = zeros(nNodes, nSteps + 1);
@@ -155,7 +155,7 @@ function tree = fit_hw_tree_ois(settlement, tree)
     % Verify calibration precision: sum of state prices at column i must equal marketDF(i)
     modelDF = sum(statePrices, 1)';
 
-    % 5. SAVE RESULTS TO TREE STRUCTURE
+    % SAVE RESULTS TO TREE STRUCTURE
 
     tree.fit.marketDF    = marketDF;
     tree.fit.modelDF     = modelDF;

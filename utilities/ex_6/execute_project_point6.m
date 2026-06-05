@@ -43,7 +43,7 @@ function [res_300_const, res_500_const, res_300_pwc, res_500_pwc] = execute_proj
 %                                  .Steps_Per_Year, .Total_Time_Steps, .Risk_free_Swap_Price, .CVA, 
 %                                  .Risky_Swap_Price 
 
-    %% 1. PRICING FOR CDS 300 bps
+    %% PRICING FOR CDS 300 bps
     
     % Pricing using Constant Sigma
     res_300_const = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_const, ...
@@ -55,7 +55,7 @@ function [res_300_const, res_500_const, res_300_pwc, res_500_pwc] = execute_proj
         sigma_times, K_strike, settlement, scheduleSwap, precision_levels,  ...
         RecoveryRate, HazardRates(1), discountCurve, pseudoCurve);
 
-    %% 2. PRICING FOR CDS 500 bps
+    %% PRICING FOR CDS 500 bps
     
     % Pricing using Constant Sigma
     res_500_const = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_const,...
@@ -67,7 +67,7 @@ function [res_300_const, res_500_const, res_300_pwc, res_500_pwc] = execute_proj
         sigma_times, K_strike, settlement, scheduleSwap, precision_levels, ...
         RecoveryRate, HazardRates(2), discountCurve, pseudoCurve);
 
-    %% 3. PRINT DISCRETIZATION CONVERGENCE TABLES
+    %% PRINT DISCRETIZATION CONVERGENCE TABLES
     
     % Convert the struct outputs into MATLAB tables for display
     table_CDS_300_const = struct2table(res_300_const);
@@ -85,12 +85,12 @@ function [res_300_const, res_500_const, res_300_pwc, res_500_pwc] = execute_proj
     disp('--> Discretization Convergence Table: CDS 500 bps (Piecewise Constant Sigma)');
     disp(table_CDS_500_pwc);
 
-    %% 4. GENERATE CONVERGENCE PLOTS
+    %% GENERATE CONVERGENCE PLOTS
     
     fig300 = plot_hw_convergence(res_300_const, res_300_pwc, 300);
     fig500 = plot_hw_convergence(res_500_const, res_500_pwc, 500);
 
-    %% 5. COMPUTE AND PRINT FINAL COMPARISON TABLES
+    %% COMPUTE AND PRINT FINAL COMPARISON TABLES
     
     % Evaluate the discrepancies between volatility approaches at highest precision
     disp('--> Comparison Table for CDS 300 bps (Constant vs Piecewise Constant Sigma):');

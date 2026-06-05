@@ -37,7 +37,7 @@ function tree = setup_mhw_tree(settlementDate, lastDate, stepsPerYear, ...
         error('lastDate must succeed the settlement date.');
     end
 
-    % 1. TEMPORAL GRID GENERATION (Uniform time tracking)
+    % TEMPORAL GRID GENERATION (Uniform time tracking)
     
     % Compute total time horizon in years from settlement to maturity using the Act/365 convention
     T_mat = yearfrac(settlementDate, lastDate, 3);
@@ -70,7 +70,7 @@ function tree = setup_mhw_tree(settlementDate, lastDate, stepsPerYear, ...
         error('The time grid is not uniform.');
     end
 
-    % 2. ORNSTEIN-UHLENBECK STOCHASTIC GEOMETRY 
+    % ORNSTEIN-UHLENBECK STOCHASTIC GEOMETRY 
     
     % Compute the constant attenuation factor of the mean reversion process 
     % over the interval dt
@@ -102,7 +102,7 @@ function tree = setup_mhw_tree(settlementDate, lastDate, stepsPerYear, ...
     % from the deterministic drift
     x = l * dx;
 
-    % 3. SCHEDULE TO NUMERICAL GRID MAPPING
+    % SCHEDULE TO NUMERICAL GRID MAPPING
     
     % Force inputs into column vectors
     floatStartDates = floatStartDates(:);

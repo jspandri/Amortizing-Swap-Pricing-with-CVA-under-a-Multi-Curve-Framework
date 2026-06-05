@@ -38,7 +38,7 @@ function [price, price_clean, CVA, details, tree] = price_swap_CVA_tree( ...
     % Extract the maturity date from the swap schedule (corresponding to the final payment date)
     maturityDate = scheduleSwap.payDates(end);
 
-    % 1. TREE GEOMETRY AND MAPPING SETUP
+    % TREE GEOMETRY AND MAPPING SETUP
     % Generate the uniform time grid and spatial grid. This function maps 
     % the floating/fixed schedule dates onto the closest numerical tree nodes 
     % by minimizing absolute distance.
@@ -47,14 +47,14 @@ function [price, price_clean, CVA, details, tree] = price_swap_CVA_tree( ...
         a, sigma, discountCurve, pseudoCurve, scheduleSwap.accrualStart, ...
         scheduleSwap.accrualEnd);
     
-    % 2. MARKET CURVE CALIBRATION (FORWARD INDUCTION)
+    % MARKET CURVE CALIBRATION (FORWARD INDUCTION)
     % Perform market fitting via state prices. 
     % We calculates the time-varying deterministic drift vector (alpha_i) 
     % required to replicate initial OIS discount factors exactly, establishing 
     % an arbitrage-free pricing structure.
     tree = fit_hw_tree_ois(settlement, tree);
 
-    % 3. BACKWARD INDUCTION
+    % BACKWARD INDUCTION
     % Execute the backward induction on the calibrated tree (considering a
     % vector of hazard rates)
     [price_clean, ~, ~, CVA, price, details] = swap_npv_cva_tree( ...

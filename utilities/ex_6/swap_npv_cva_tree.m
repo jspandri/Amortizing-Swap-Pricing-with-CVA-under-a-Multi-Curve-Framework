@@ -37,7 +37,7 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
 %   NPV_risky    : [Vector] Risky Swap NPV (NPV_rf - CVA).
 %   details      : [Struct] Prices, CVA and exposure profiles.
 
-    % 1. MULTI-CURVE FORWARD QUANTITIES
+    % MULTI-CURVE FORWARD QUANTITIES
 
     % Extract pre-computed forward rates and discounts for the schedule
     fwd = node_forward_factors(settlement, tree, scheduleSwap);
@@ -57,7 +57,7 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     nNodes = length(tree.x);
     nCols  = tree.nSteps + 1;
 
-    % 2. CASH FLOW GENERATION
+    % CASH FLOW GENERATION
 
     % Pre-allocate the grid matrices mapping cash flows to specific reset times
     couponFloatAtReset = zeros(nNodes, nCols);
@@ -82,7 +82,7 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     % Define the net cash flow injection matrix (Bank receives float, pays fixed)
     couponNetAtReset = couponFloatAtReset - couponFixedAtReset;
 
-    % 3. BACKWARD INDUCTION ON THE FULL GRID
+    % BACKWARD INDUCTION ON THE FULL GRID
 
     % Rollback the future expected values iteratively from maturity to t0
     V_net   = backward_value_full_grid(tree, couponNetAtReset);
@@ -93,7 +93,7 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     PV_fixed = sum(sum(statePrices .* couponFixedAtReset));
     NPV_rf   = PV_float - PV_fixed;
 
-    % 4. CVA COMPUTATION (vectorized to work with a vector of hazard rates)
+    % CVA COMPUTATION (vectorized to work with a vector of hazard rates)
     LGD = 1 - RecoveryRate;
     statePrices = tree.fit.statePrices;   % Discounted prices
     marketDF    = tree.fit.marketDF(:);   % Market OIS discounts P(0, t_i)
