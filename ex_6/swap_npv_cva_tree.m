@@ -85,15 +85,13 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     % 3. BACKWARD INDUCTION ON THE FULL GRID
 
     % Rollback the future expected values iteratively from maturity to t0
-    V_float = backward_value_full_grid(tree, couponFloatAtReset);
-    V_fixed = backward_value_full_grid(tree, couponFixedAtReset);
     V_net   = backward_value_full_grid(tree, couponNetAtReset);
 
-    % Extract initial values at t=0 (Center node: l_max + 1)
-    idx0     = tree.l_max + 1;
-    PV_float = V_float(idx0, 1);
-    PV_fixed = V_fixed(idx0, 1);
-    NPV_rf   = V_net(idx0, 1);
+    % Retrive NPV floating/fixed leg by using the states prices
+    statePrices = tree.fit.statePrices;  
+    PV_float = sum(sum(statePrices .* couponFloatAtReset));
+    PV_fixed = sum(sum(statePrices .* couponFixedAtReset));
+    NPV_rf   = PV_float - PV_fixed;
 
     % 4. CVA COMPUTATION (vectorized to work with a vector of hazard rates)
     LGD = 1 - RecoveryRate;
@@ -137,8 +135,6 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     details.couponFloatAtReset = couponFloatAtReset;
     details.couponFixedAtReset = couponFixedAtReset;
     details.couponNetAtReset   = couponNetAtReset;
-    details.V_float            = V_float;
-    details.V_fixed            = V_fixed;
     details.V_net              = V_net;
     details.PV_float           = PV_float;
     details.PV_fixed           = PV_fixed;
