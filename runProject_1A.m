@@ -138,5 +138,4 @@ res_tree = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_const, K_strike, ..
     discountCurve_22, pseudoCurve_adj_22);
 
 % Generate convergence plots
-plot_hw_convergence(res_tree.hazard(1), 300);
-plot_hw_convergence(res_tree.hazard(2), 500);
+plot_hw_convergence(res_tree.hazard, [300, 500]);
