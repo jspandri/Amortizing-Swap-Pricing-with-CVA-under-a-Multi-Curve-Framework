@@ -1,16 +1,16 @@
 function vol_data = read_vol_matrix_data(filename)
-% Read swaption volatility matrix data from Excel file.
+% READ_VOL_MATRIX_DATA Read swaption volatility matrix data from Excel file.
 % Extracts the matrix, strike, expiries, and tenors.
 %
 % INPUTS:
-%   filename            - string representing the name of the Excel file.
+%   filename                   : [String/Char] string representing the name of the Excel file.
 %
 % OUTPUTS:
-%   vol_data            - struct containing:
-%                           - strike: scalar
-%                           - vol_matrix: matrix of normal volatilities (in decimal)
-%                           - expiries: vector of expiries (in years)
-%                           - tenors: vector of tenors (in years)
+%   vol_data                   : [Struct] struct containing:
+%                                  - .strike     : scalar
+%                                  - .vol_matrix : matrix of normal volatilities (in decimal)
+%                                  - .expiries   : vector of expiries (in years)
+%                                  - .tenors     : vector of tenors (in years)
 
 % Read file
 data = readcell(filename);

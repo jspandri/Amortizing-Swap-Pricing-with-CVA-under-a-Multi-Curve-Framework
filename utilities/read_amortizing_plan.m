@@ -1,8 +1,18 @@
 function swapSchedule = read_amortizing_plan(filename)
-% READ_AMORTIZING_PLAN Reads the swap amortizing plan from an Excel file
-%   Returns a struct containing dates, year fractions, and notionals.
-
-
+% READ_AMORTIZING_PLAN Reads the swap amortizing plan from an Excel file.
+% Returns a struct containing dates, year fractions, and notionals.
+%
+% INPUTS:
+%   filename                   : [String/Char] name of the Excel file.
+%
+% OUTPUTS:
+%   swapSchedule               : [Struct] struct containing dates, year fractions, and notionals:
+%                                  - .payDates     : payment dates
+%                                  - .accrualStart : accrual start dates
+%                                  - .accrualEnd   : accrual end dates
+%                                  - .days         : days in the accrual period
+%                                  - .delta        : year fraction (Act/360)
+%                                  - .notionals    : amortizing notionals
 % Reads the table preserving the original column names (including spaces)
 data = readtable(filename, 'VariableNamingRule', 'preserve');
 

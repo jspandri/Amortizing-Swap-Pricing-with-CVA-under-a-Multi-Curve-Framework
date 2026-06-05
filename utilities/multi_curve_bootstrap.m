@@ -1,31 +1,27 @@
 function [discountCurve, pseudoCurve] = multi_curve_bootstrap(euriborSet, estrSet, plot_bool, mhw_params)
-% Performs dual-curve (discount and pseudo-discount curves) bootstrap with 
-% crab approach. Requires OIS ESTR and Euribor3m instruments.
-% Returns discounting (ESTR) and pseudo-discounting (Euribor3m) curves
-% as a struct containing discount factors, zero-rates and corresponding
-% dates.
+% MULTI_CURVE_BOOTSTRAP Performs dual-curve (discount and pseudo-discount curves) bootstrap with crab approach. Requires OIS ESTR and Euribor3m instruments.
+% Returns discounting (ESTR) and pseudo-discounting (Euribor3m) curves as a struct containing discount factors, zero-rates and corresponding dates.
 %
 % INPUTS:
-%   euriborSet          - struct containing Euribor3m rates and dates of
-%                         corresponding instruments.
-%   estrSet             - struct containing OIS ESTR rates and dates of
-%                         corresponding instruments.
-%   plot_bool           - (Optional) bool = true => plot the bootstrapped
-%                                                   curves
-%                         Default: no plot.
-%   mhw_params          - (Optional) Multi-Curve Hull-White parameters to
-%                         convexity adjust futures rates.
-%                         Default: neglect convexity adjustment.
+%   euriborSet                 : [Struct] struct containing Euribor3m rates and dates of
+%                                         corresponding instruments.
+%   estrSet                    : [Struct] struct containing OIS ESTR rates and dates of
+%                                         corresponding instruments.
+%   plot_bool                  : [Boolean] (Optional) bool = true => plot the bootstrapped curves.
+%                                          Default: no plot.
+%   mhw_params                 : [Struct] (Optional) Multi-Curve Hull-White parameters to
+%                                         convexity adjust futures rates. 
+%                                         Default: neglect convexity adjustment.
 %
 % OUTPUTS:
-%   discountCurve       - struct of discounting (OIS ESTR) curve 
-%                         containing discount factors, zero-rates and
-%                         corresponding dates.
-%   pseudoCurve         - struct of pseudo-discounting (Euribor3m) curve 
-%                         containing discount factors, zero-rates and
-%                         corresponding dates.
-
-% Extract settlement date
+%   discountCurve              : [Struct] struct of discounting (OIS ESTR) curve containing:
+%                                  - .discounts : discount factors
+%                                  - .zeroRates : zero-rates
+%                                  - .dates     : corresponding dates
+%   pseudoCurve                : [Struct] struct of pseudo-discounting (Euribor3m) curve containing:
+%                                  - .discounts : discount factors
+%                                  - .zeroRates : zero-rates
+%                                  - .dates     : corresponding dates
 settlement = estrSet.settlement;
 
 %% DISCOUNTING CURVE (OIS ESTR Curve)

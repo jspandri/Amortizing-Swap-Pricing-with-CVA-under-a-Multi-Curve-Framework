@@ -1,17 +1,15 @@
 function [euriborSet, estrSet] = read_bootstrap_data(filename, settlement)
-% Read Excel data of Euribor3m and OIS ESTR instruments (1st and 2nd
-% sheets) and computes corresponding dates.
-% Returns euriborSet and estrSet containing ordered and classified
-% instruments dates and rates.
+% READ_BOOTSTRAP_DATA Read Excel data of Euribor3m and OIS ESTR instruments (1st and 2nd sheets) and computes corresponding dates.
+% Returns euriborSet and estrSet containing ordered and classified instruments dates and rates.
 %
 % INPUTS:
-%   filename            - name of Excel file.
-%   settlement          - settlement date.
+%   filename           : [String/Char] name of Excel file.
+%   settlement         : [Scalar/Datetime] settlement date.
 %
 % OUTPUTS:
-%   euriborSet          - Euribor3m set of classified and ordered dates and
-%                         rates.
-%   estrSet             - OIS ESTR set of ordered dates and rates.
+%   euriborSet         : [Struct] Euribor3m set of classified and ordered dates and
+%                                 rates.
+%   estrSet            : [Struct] OIS ESTR set of ordered dates and rates.
 
 % Extract sheets names
 sheets = sheetnames(filename);

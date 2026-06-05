@@ -1,5 +1,5 @@
 function activeSchedule = generate_active_swap_schedule(settlement, rawSchedule, estrCurve, euriborCurve)
-% GENERATE_ACTIVE_SWAP_SCHEDULE2 Filters a raw swap schedule (e.g., from Excel) 
+% GENERATE_ACTIVE_SWAP_SCHEDULE Filters a raw swap schedule (e.g., from Excel) 
 % based on the current settlement date, and computes forward rates and OIS discounts 
 % only for the active, surviving periods.
 %

@@ -1,4 +1,4 @@
-function vol_interp = get_interpolated_vol_direct_bpv(settlement, expiry_date, target_BPV_norm, volData, estCurv)
+function vol_interp = get_interpolated_vol_direct_bpv(settlement, expiry_date, target_BPV_norm, volData, discountCurve)
     % GET_INTERPOLATED_VOL_DIRECT_BPV Extracts the implied Bachelier volatility 
     % for an amortizing swap by directly interpolating across Bullet BPVs.
     % This implementation strictly follows Hint 2 of the project guidelines.
@@ -20,7 +20,7 @@ function vol_interp = get_interpolated_vol_direct_bpv(settlement, expiry_date, t
     num_tenors = length(tenors);
     bullet_BPVs = zeros(N, num_tenors);
     
-    % --Vectorized Bullet BPV Calculation ---
+    % Vectorized Bullet BPV Calculation
     for j = 1:num_tenors
         Y = tenors(j);
         num_quarters = Y * 4; 
@@ -28,7 +28,7 @@ function vol_interp = get_interpolated_vol_direct_bpv(settlement, expiry_date, t
         pay_dates_bullet_mat = generate_exact_quarterly_dates(expiry_date, num_quarters);
         
         P_bullet_vec = get_discount_factor_by_zero_rates_linear_interp(...
-            settlement, pay_dates_bullet_mat(:), estCurv.dates, estCurv.discounts);
+            settlement, pay_dates_bullet_mat(:), discountCurve.dates, discountCurve.discounts);
             
         P_bullet_mat = reshape(P_bullet_vec, N, num_quarters);
         full_dates_mat = [expiry_date, pay_dates_bullet_mat];
@@ -37,7 +37,7 @@ function vol_interp = get_interpolated_vol_direct_bpv(settlement, expiry_date, t
         bullet_BPVs(:, j) = sum(exact_deltas .* P_bullet_mat, 2);
     end
     
-    % --- Direct BPV Interpolation (Hint 2) ---
+    % Direct BPV Interpolation (hint 2)
     vol_interp = zeros(N, 1);
     valid_idx = target_BPV_norm > 0;
     
@@ -47,12 +47,12 @@ function vol_interp = get_interpolated_vol_direct_bpv(settlement, expiry_date, t
     
     for i = 1:N
         if valid_idx(i)
-            % STEP A (Hint 2): Interpolate along the expiries axis.
+            % STEP A (hint 2): Interpolate along the expiries axis.
             % This extracts a volatility curve (1 x num_tenors vector) 
             % perfectly aligned with our exact T_exp(i)
             vol_curve_at_Texp = interp1(volData.expiries, volData.vol_matrix, T_exp(i), 'linear');
             
-            % STEP B (Hint 2): Direct interpolation using BPVs.
+            % STEP B (hint 2): Direct interpolation using BPVs.
             % X-axis = Bullet swap BPVs at that specific expiry
             % Y-axis = Volatility curve just computed
             % Query  = Our target amortizing BPV

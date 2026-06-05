@@ -1,5 +1,5 @@
 function plot_cva_dashboard(payDates, EE_profiles, hazardRates, recoveryRate, settlement, cdsSpreads_bps)
-    % PLOT_CVA_EDUCATIONAL_DASHBOARD Creates a 4-panel plot
+    % PLOT_CVA_DASHBOARD Creates a 4-panel plot
     % showing how Market Risk and Credit Risk combine to form the CVA.
     % It supports multiple hazard rate scenarios for comparative analysis.
     %

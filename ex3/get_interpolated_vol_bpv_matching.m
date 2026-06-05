@@ -1,17 +1,20 @@
-function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date, target_BPV_norm, volData, estCurv)
-    % GET_INTERPOLATED_VOL_BPV_MATCHING Maps amortizing swap BPVs to equivalent market 
-    % bullet tenors to find the exact Bachelier implied volatility at each node.
-    %
-    % Inputs:
-    %   settlement      - Valuation date (datenum scalar)
-    %   expiry_date     - Option expiry dates / payment nodes (datenum vector, length N)
-    %   target_BPV_norm - Normalized residual BPVs of the amortizing swap (vector, length N)
-    %   volData         - Struct with market vol grid (.tenors, .expiries, .vol_matrix)
-    %   estCurv         - Struct with OIS discount curve (.dates, .discounts)
-    %
-    % Outputs:
-    %   vol_interp      - Vector of mapped Bachelier volatilities for each node (length N)
-
+function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date, target_BPV_norm, volData, discountCurve)
+% GET_INTERPOLATED_VOL_BPV_MATCHING Maps amortizing swap BPVs to equivalent market bullet tenors to find the exact Bachelier implied volatility at each node.
+%
+% INPUTS:
+%   settlement                 : [Scalar/Datetime] Valuation date (datenum scalar)
+%   expiry_date                : [Vector] Option expiry dates / payment nodes (datenum vector, length N)
+%   target_BPV_norm            : [Vector] Normalized residual BPVs of the amortizing swap (vector, length N)
+%   volData                    : [Struct] Struct with market vol grid:
+%                                  - .tenors     : market tenors
+%                                  - .expiries   : market expiries
+%                                  - .vol_matrix : volatility matrix
+%   discountCurve                   : [Struct] Struct with OIS discount curve:
+%                                  - .dates      : curve dates
+%                                  - .discounts  : curve discounts
+%
+% OUTPUTS:
+%   vol_interp                 : [Vector] Vector of mapped Bachelier volatilities for each node (length N)
     expiry_date = expiry_date(:);
     target_BPV_norm = target_BPV_norm(:);
     N = length(expiry_date);
@@ -30,7 +33,7 @@ function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date,
         % Flatten the 2D date matrix into a 1D vector using (:) to query the curve 
         % interpolation function in a single, high-performance vectorized call.
         P_bullet_vec = get_discount_factor_by_zero_rates_linear_interp(...
-            settlement, pay_dates_bullet_mat(:), estCurv.dates, estCurv.discounts);
+            settlement, pay_dates_bullet_mat(:), discountCurve.dates, discountCurve.discounts);
             
         P_bullet_mat = reshape(P_bullet_vec, N, num_quarters);
 
