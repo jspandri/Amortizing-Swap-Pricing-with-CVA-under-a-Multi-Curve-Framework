@@ -13,7 +13,7 @@ close all;
 clc;
 
 addpath("utilities\")
-addpath("data\","ex_1","ex_2\","ex_3\","ex_4\","ex_5","ex_6\")
+addpath("data\","ex_1","ex_2\","ex_3\","ex_5","ex_6\")
 
 %% Read data
 
@@ -73,7 +73,6 @@ for i = 1:2
     NPV_22(i) = NPV_riskfree - Total_CVA(i);
 end
 
-%plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
 plot_cva_dashboard(scheduleSwap_22.payDates, EE_profile, HazardRates, RecoveryRate, settlement_22, [300, 500]);
 %plot_cva_dashboard(scheduleSwap_22.payDates, EE_profile(:,1), HazardRates(1), RecoveryRate, settlement_22)
 plot_interpolated_volatility(scheduleSwap_22.payDates, vol_data_interp(:, 1));
