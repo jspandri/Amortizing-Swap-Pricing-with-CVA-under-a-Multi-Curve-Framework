@@ -1,19 +1,17 @@
 function df_interp = get_discount_factor_by_zero_rates_linear_interp(reference_date, interp_date, dates, discount_factors, allow_extrap)
-% Given a vector of discount factors, return the discount factors at given 
-% dates by linear interpolation.
+% GET_DISCOUNT_FACTOR_BY_ZERO_RATES_LINEAR_INTERP Given a vector of discount factors, return the discount factors at given dates by linear interpolation.
 %
 % INPUTS:
-%   reference_date      - settlement date
-%   interp_date         - scalar or vector of interpolation dates (dates at 
-%                         which we extract DF)
-%   dates               - available DF dates
-%   discount_factors    - discount factors at corresponding dates
-%   allow_extrap        - (optional) bool: if true allows extrapolation.        
+%   reference_date             : [Scalar] settlement date
+%   interp_date                : [Scalar/Vector] scalar or vector of interpolation dates (dates at 
+%                                                which we extract DF)
+%   dates                      : [Vector] available DF dates
+%   discount_factors           : [Vector] discount factors at corresponding dates
+%   allow_extrap               : [Boolean] (optional) bool: if true allows extrapolation.        
 %                                          Default: false.
 %
 % OUTPUTS:
-%   df_interp   - interpolated discount factors at interp_date
-
+%   df_interp                  : [Vector] interpolated discount factors at interp_date
 
 if nargin < 5 || isempty(allow_extrap)
     allow_extrap = false;

@@ -1,14 +1,12 @@
 function schedule = generate_schedule_with_stub(settlement, maturity)
-% Generate schedule of yearly payment dates considering short stub in
-% advance (found in backward way, starting from maturity).
+% GENERATE_SCHEDULE_WITH_STUB Generate schedule of yearly payment dates considering short stub in advance (found in backward way, starting from maturity).
 %
 % INPUTS:
-%   settlement          - settlement date.
-%   maturity            - maturity date.
+%   settlement                 : [Scalar] settlement date.
+%   maturity                   : [Scalar] maturity date.
 %
 % OUTPUTS:
-%   schedule            - vector of payment dates.
-
+%   schedule                   : [Vector] vector of payment dates.
 
 curr_unadj = maturity;
 schedule_unadj = curr_unadj;

@@ -2,7 +2,7 @@ function vol_interp = get_interpolated_vol_bpv_matching(settlement, expiry_date,
 % GET_INTERPOLATED_VOL_BPV_MATCHING Maps amortizing swap BPVs to equivalent market bullet tenors to find the exact Bachelier implied volatility at each node.
 %
 % INPUTS:
-%   settlement                 : [Scalar/Datetime] Valuation date (datenum scalar)
+%   settlement                 : [Scalar] Valuation date (datenum scalar)
 %   expiry_date                : [Vector] Option expiry dates / payment nodes (datenum vector, length N)
 %   target_BPV_norm            : [Vector] Normalized residual BPVs of the amortizing swap (vector, length N)
 %   volData                    : [Struct] Struct with market vol grid:

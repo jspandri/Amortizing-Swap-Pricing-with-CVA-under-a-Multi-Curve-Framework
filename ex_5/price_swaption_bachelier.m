@@ -4,7 +4,7 @@ function mkt_prices = price_swaption_bachelier(settlement, discountCurve, pseudo
 %
 %
 % INPUTS:
-%   settlement                 : [Scalar/Datetime] settlement date.
+%   settlement                 : [Scalar] settlement date.
 %   discountCurve              : [Struct] struct of discounting (OIS ESTR) curve containing:
 %                                  - .discounts : discount factors
 %                                  - .zeroRates : zero-rates

@@ -8,7 +8,7 @@ function [results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaptio
 %       b) Piecewise constant sigma (time dependent)
 %
 % INPUTS:
-%   settlement                 : [Scalar/Datetime] settlement date.
+%   settlement                 : [Scalar] settlement date.
 %   discountCurve              : [Struct] struct containing discount factors, zero-rates, and dates for the OIS curve:
 %                                  - .discounts  : discount factors
 %                                  - .zeroRates  : zero-rates

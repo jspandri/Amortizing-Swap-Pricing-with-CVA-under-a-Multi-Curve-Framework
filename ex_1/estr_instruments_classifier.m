@@ -1,16 +1,16 @@
 function estrSET = estr_instruments_classifier(estr_table, settlement)
-% Given an OIS ESTR instruments table read from excel, returns a set of
-% ordered instruments with corresponding maturities and rates.
+% ESTR_INSTRUMENTS_CLASSIFIER Given an OIS ESTR instruments table read from excel, returns a set of ordered instruments with corresponding maturities and rates.
 %
 % INPUTS:
-%   estr_table          - excel output table with one column of instruments
-%                         maturities and one column of rates in % terms.
-%   settlement          - settlement date.
+%   estr_table                 : [Table] excel output table with one column of instruments
+%                                        maturities and one column of rates in % terms.
+%   settlement                 : [Scalar] settlement date.
 %
 % OUTPUTS:
-%   estrSet             - ESTR OIS Set of ordered instruments with
-%                         maturities and rates.
-
+%   estrSET                    : [Struct] ESTR OIS Set of ordered instruments with maturities and rates:
+%                                  - .settlement : settlement date
+%                                  - .dates      : corresponding maturities dates
+%                                  - .rates      : corresponding rates
 % Extract instruments maturities and rates
 instruments = string(estr_table.(estr_table.Properties.VariableNames{1}));
 rates = estr_table{:,2} ./ 100;

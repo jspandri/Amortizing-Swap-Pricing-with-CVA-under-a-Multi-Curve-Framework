@@ -1,19 +1,17 @@
 function dates = following_day_convention(t0, d, m, y, n, modified)
-% Creates a vector of n dates added to an initial date, considering the
-% following or modified following convention.
+% FOLLOWING_DAY_CONVENTION Creates a vector of n dates added to an initial date, considering the following or modified following convention.
 %
 % INPUTS:
-%   t0          - initial date
-%   d           - days to add
-%   m           - months to add
-%   y           - years to add
-%   n           - number of recurrent dates
-%   modified    - bool = true if modified following convention
-%                 bool = false if following convention
+%   t0                         : [Scalar/Datetime] initial date
+%   d                          : [Scalar/Vector] days to add
+%   m                          : [Scalar/Vector] months to add
+%   y                          : [Scalar/Vector] years to add
+%   n                          : [Scalar] number of recurrent dates
+%   modified                   : [Boolean] bool = true if modified following convention
+%                                          bool = false if following convention
 %
 % OUTPUTS:
-%   dates       - vector of dates with selected convention
-
+%   dates                      : [Vector] vector of dates with selected convention
 if modified
     rule = "modifiedfollow";
 else

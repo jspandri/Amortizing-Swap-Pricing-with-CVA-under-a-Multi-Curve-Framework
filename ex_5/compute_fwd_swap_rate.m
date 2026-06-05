@@ -2,7 +2,7 @@ function S_fwd = compute_fwd_swap_rate(settlement, expiry, tenor, discountCurve,
 % COMPUTE_FWD_SWAP_RATE Compute the forward swap rate for a given set of expiries and tenors.
 %
 % INPUTS:
-%   settlement                 : [Scalar/Datetime] scalar date representing the valuation date.
+%   settlement                 : [Scalar] scalar date representing the valuation date.
 %   expiry                     : [Scalar/Vector] expiry in years.
 %   tenor                      : [Scalar/Vector] tenor in years.
 %   discountCurve              : [Struct] struct of discounting (OIS ESTR) curve containing:

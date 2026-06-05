@@ -1,17 +1,15 @@
 function idx = find_future_idx(settlement, futures_starts, starting_month)
-% Finds the index of a future with starting date in the requested
-% starting_month and same starting year of the settlement date.
+% FIND_FUTURE_IDX Finds the index of a future with starting date in the requested starting_month and same starting year of the settlement date.
 %
 % INPUTS:
-%   settlement          - settlement date.
-%   futures_starts      - vector of futures starting dates.
-%   starting_month      - (1-12) scalar: starting month of requested
-%                         future.
+%   settlement                 : [Scalar] settlement date.
+%   futures_starts             : [Vector] vector of futures starting dates.
+%   starting_month             : [Scalar] (1-12) scalar: starting month of requested future.
 %
 % OUTPUTS:
-%   idx                 - index of requested future.
-
+%   idx                        : [Scalar] index of requested future.
 % Extract settlement month and year
+
 [settle_year, settle_month, ~] = datevec(settlement);
 % Compute the future start date in settlement month
 settle_month_third_wed = thirdwednesday(settle_month, settle_year);

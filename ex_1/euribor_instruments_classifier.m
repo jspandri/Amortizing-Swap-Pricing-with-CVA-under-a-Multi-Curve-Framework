@@ -1,18 +1,14 @@
 function euriborSet = euribor_instruments_classifier(euribor_table, settlement)
-% Given an EURIBOR3m instruments table read from excel, returns a set of
-% classified (depos, futures, swaps) and ordered instruments with 
-% corresponding maturities and rates.
+% EURIBOR_INSTRUMENTS_CLASSIFIER Given an EURIBOR3m instruments table read from excel, returns a set of classified (depos, futures, swaps) and ordered instruments with corresponding maturities and rates.
 %
 % INPUTS:
-%   euribor_table       - excel output table with one column of 
-%                         instruments names and one column of rates in % 
-%                         terms.
-%   settlement          - settlement date.
+%   euribor_table              : [Table] excel output table with one column of instruments
+%                                        names and one column of rates in % terms.
+%   settlement                 : [Scalar] settlement date.
 %
 % OUTPUTS:
-%   euriborSet          - Euribor3m Set of classified and ordered 
-%                         instruments with maturities and rates.
-
+%   euriborSet                 : [Struct] Euribor3m Set of classified and ordered instruments
+%                                         with maturities and rates.
 % Extract instruments maturities and rates
 instruments = string(euribor_table.(euribor_table.Properties.VariableNames{1}));
 rates = euribor_table{:,2} ./ 100;

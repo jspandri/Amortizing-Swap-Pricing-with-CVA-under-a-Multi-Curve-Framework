@@ -4,7 +4,7 @@ function activeSchedule = generate_active_swap_schedule(settlement, rawSchedule,
 % only for the active, surviving periods.
 %
 % INPUTS:
-%   settlement                 : [Scalar/Datetime] Current valuation date (datenum).
+%   settlement                 : [Scalar] Current valuation date (datenum).
 %   rawSchedule                : [Struct] Struct containing the FULL original swap schedule from Excel:
 %                                  - .accrualStart : accrual start dates
 %                                  - .accrualEnd   : accrual end dates

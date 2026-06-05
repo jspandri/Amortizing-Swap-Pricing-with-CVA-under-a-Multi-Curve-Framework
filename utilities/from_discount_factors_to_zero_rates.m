@@ -1,15 +1,16 @@
 function zero_rates = from_discount_factors_to_zero_rates(settlement, dates, discount_factors)
-% Compute the zero rates from the discount factors.
+% FROM_DISCOUNT_FACTORS_TO_ZERO_RATES Compute the zero rates from the discount factors.
 % Formula: r = -ln(DF) / T  , where DF : disc fact
+%
 % INPUTS:
-%   dates             - datenum dates 
-%   discount_factors  - discount factors of correspoding dates
+%   settlement                 : [Scalar] settlement date.
+%   dates                      : [Vector] datenum dates.
+%   discount_factors           : [Vector] discount factors of corresponding dates.
 %
 % OUTPUTS:
-%   zero_rates  - zero-rates of corresponding dates
+%   zero_rates                 : [Vector] zero-rates of corresponding dates.
 
 % INPUT VALIDATION
-
 if ~(isnumeric(dates) || isdatetime(dates))
     error( 'Input dates must be a numeric array (datenum or year fractions) or datetime array.');
 end

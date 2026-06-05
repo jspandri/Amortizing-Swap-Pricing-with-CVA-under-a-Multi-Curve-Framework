@@ -4,7 +4,7 @@ function [euriborSet, estrSet] = read_bootstrap_data(filename, settlement)
 %
 % INPUTS:
 %   filename           : [String/Char] name of Excel file.
-%   settlement         : [Scalar/Datetime] settlement date.
+%   settlement         : [Scalar] settlement date.
 %
 % OUTPUTS:
 %   euriborSet         : [Struct] Euribor3m set of classified and ordered dates and

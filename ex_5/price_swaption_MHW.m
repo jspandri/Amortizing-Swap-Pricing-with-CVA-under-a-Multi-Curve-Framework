@@ -3,7 +3,7 @@ function price_MHW = price_swaption_MHW(settlement, a, sigma, gamma, expiry, ten
 %
 %
 % INPUTS:
-%   settlement                 : [Scalar/Datetime] settlement date.
+%   settlement                 : [Scalar] settlement date.
 %   a                          : [Scalar] mean reversion parameter.
 %   sigma                      : [Scalar] volatility parameter.
 %   gamma                      : [Scalar] gamma parameter.
