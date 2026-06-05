@@ -54,7 +54,7 @@ mkt_vols = zeros(n_swaptions, 1);
 
 % Find requested swaptions expiries and tenors
 for i = 1:n_swaptions
-    % Exctract current swaption expiry and tenor
+    % Extract current swaption expiry and tenor
     expiry = diag_expiries(i);
     tenor = diag_tenors(i);
     
@@ -82,7 +82,7 @@ options = optimoptions('lsqnonlin', 'Display', 'off');
 % Define initial guesses, lower and upper bounds
 x0_const = [0.05, 0.01]; % [a, sigma]
 lb_const = [1e-6, 1e-6]; 
-ub_const = [100, 100];
+ub_const = [10, 10];
 
 % To save optimal values of "a"
 best_params_a = zeros(length(gammas), 1);
@@ -127,7 +127,7 @@ options = optimoptions('lsqnonlin', 'Display', 'off');
 % Define initial guess, lower and upper bound
 x0_pwc = 0.01 * ones(1, n_swaptions); 
 lb_pwc = 1e-6 * ones(1, n_swaptions); 
-ub_pwc = inf * ones(1, n_swaptions);
+ub_pwc = 10 * ones(1, n_swaptions);
 
 fprintf('\n CALIBRATING WITH PIECEWISE CONSTANT SIGMA (TIME DEPENDENT) ... \n');
 fprintf('--------------------------------------------------------------------------------\n');

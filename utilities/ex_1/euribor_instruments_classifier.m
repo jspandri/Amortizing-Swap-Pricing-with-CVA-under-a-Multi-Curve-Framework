@@ -9,6 +9,7 @@ function euriborSet = euribor_instruments_classifier(euribor_table, settlement)
 % OUTPUTS:
 %   euriborSet                 : [Struct] Euribor3m Set of classified and ordered instruments
 %                                         with maturities and rates.
+
 % Extract instruments maturities and rates
 instruments = string(euribor_table.(euribor_table.Properties.VariableNames{1}));
 rates = euribor_table{:,2} ./ 100;

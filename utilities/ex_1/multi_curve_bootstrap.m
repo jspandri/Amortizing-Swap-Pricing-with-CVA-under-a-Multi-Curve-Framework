@@ -153,7 +153,7 @@ pseudo_discounts = [1; depo_discount];
 
 
 
-% 2) 3x6 Future (6m discount)
+% 2) 3rd Future (approx. 6m discount)
 
 % Extract futures data
 futures_starts = euriborSet.datesSet.futures(:, 1);
@@ -178,28 +178,28 @@ if nargin == 4 && ~isempty(mhw_params)
     futures_rates = futures_rates - (gamma_tilda ./ delta);
 end
 
-% Find future 3x6
-idx_3x6 = find_future_idx(settlement, futures_starts, 3);
-start_3x6 = futures_starts(idx_3x6);
-end_3x6 = futures_ends(idx_3x6);
-rate_3x6 = futures_rates(idx_3x6);
+% Find 3rd future
+idx_3 = find_future_idx(settlement, futures_starts, 3);
+start_3 = futures_starts(idx_3);
+end_3 = futures_ends(idx_3);
+rate_3 = futures_rates(idx_3);
 
-% Discount at 3m
+% Discount at future start date
 discount_start = get_discount_factor_by_zero_rates_linear_interp(settlement, ...
-               start_3x6, pseudo_dates, pseudo_discounts);
+               start_3, pseudo_dates, pseudo_discounts);
 
-% Compute discount at 6m
-delta = yearfrac(start_3x6, end_3x6, 2); % ACT/360
-discount_end = discount_start / (1 + delta * rate_3x6);
+% Compute discount at future end date
+delta = yearfrac(start_3, end_3, 2); % ACT/360
+discount_end = discount_start / (1 + delta * rate_3);
 
-pseudo_dates = [pseudo_dates; end_3x6];
+pseudo_dates = [pseudo_dates; end_3];
 pseudo_discounts = [pseudo_discounts; discount_end];
 
 % Save index to discard later
-used_futures_idx = idx_3x6;
+used_futures_idx = idx_3;
 
 
-% 3) Backward step: 1x4 and 2x5 futures (1m and 2m discounts)
+% 3) Backward step: 1st and 2nd futures (approx. 1m and 2m discounts)
 
 for i = 1:2
     % Find future

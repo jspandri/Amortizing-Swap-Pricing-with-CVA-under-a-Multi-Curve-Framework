@@ -1,5 +1,5 @@
 function price_MHW = price_swaption_MHW(settlement, a, sigma, gamma, expiry, tenor, strike, discountCurve, pseudoCurve)
-% PRICE_SWAPTION_MHW Price cash-settled swaptions via MHW (Multi-curve Hull-White) model.
+% PRICE_SWAPTION_MHW Price cash-settled Receiver swaptions via MHW (Multi-curve Hull-White) model.
 %
 %
 % INPUTS:

@@ -13,6 +13,7 @@ function swapSchedule = read_amortizing_plan(filename)
 %                                  - .days         : days in the accrual period
 %                                  - .delta        : year fraction (Act/360)
 %                                  - .notionals    : amortizing notionals
+
 % Reads the table preserving the original column names (including spaces)
 data = readtable(filename, 'VariableNamingRule', 'preserve');
 
@@ -34,8 +35,6 @@ swapSchedule.delta = swapSchedule.days / 360;
 if isnumeric(data.("Notional"))
     swapSchedule.notionals = data.("Notional");
 else
-    % In case the Excel is read as a string due to dots/commas
-    % (useful if dealing with the European format "15.000.000,00")
     notionals_str = strrep(data.("Notional"), '.', ''); % Remove thousands separators
     notionals_str = strrep(notionals_str, ',', '.');    % Change decimal comma to dot
     swapSchedule.notionals = str2double(notionals_str);

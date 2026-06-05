@@ -42,7 +42,6 @@ function [EE_profile, S_iw_profile, BPV_iw_profile,vol_exact_profile] = price_sw
     F_forward = scheduleSwap.F_forward;
 
     % 2 BD fixing 
-    %fixingDates = shift_2bd_backward(payDates);
     fixingDates=datewrkdy(payDates, -3);
     T_exp = yearfrac(settlement, fixingDates, 3);
     
@@ -96,13 +95,9 @@ function [EE_profile, S_iw_profile, BPV_iw_profile,vol_exact_profile] = price_sw
     % Normalize outstanding BPV by current target principal
     target_BPV_norm(valid_bpv_mask) = BPV_iw_profile(valid_bpv_mask) ./ N_current(valid_bpv_mask);
 
-     % Extract mapped Bachelier volatilities
-     vol_exact_profile= get_interpolated_vol_direct_bpv(settlement, fixingDates, target_BPV_norm, volData, discountCurve);
+    % Extract mapped Bachelier volatilities
+    vol_exact_profile= get_interpolated_vol_direct_bpv(settlement, fixingDates, target_BPV_norm, volData, discountCurve);
      
-     %SECOND METHOD for Bachelier volatilities:
-     % with equivalent tenor and interpolation on the grid interp2  
-     %vol_exact_profile = get_interpolated_vol_bpv_matching(settlement,fixingDates, target_BPV_norm, volData, discountCurve);
-
 
     % BACHELIER EXPOSURE COMPUTATION
     

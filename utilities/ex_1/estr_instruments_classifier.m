@@ -11,6 +11,7 @@ function estrSET = estr_instruments_classifier(estr_table, settlement)
 %                                  - .settlement : settlement date
 %                                  - .dates      : corresponding maturities dates
 %                                  - .rates      : corresponding rates
+
 % Extract instruments maturities and rates
 instruments = string(estr_table.(estr_table.Properties.VariableNames{1}));
 rates = estr_table{:,2} ./ 100;

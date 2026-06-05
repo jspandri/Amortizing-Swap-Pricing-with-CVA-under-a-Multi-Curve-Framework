@@ -56,7 +56,7 @@ for i = 1:n_gammas
          'DisplayName', sprintf('\\gamma = %.1f', gammas(i)));
 end
 
-
+% Plot settings
 ax = gca;
 ax.FontName = 'Times New Roman';
 ax.FontSize = 20;

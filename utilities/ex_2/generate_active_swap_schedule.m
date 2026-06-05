@@ -23,6 +23,7 @@ function activeSchedule = generate_active_swap_schedule(settlement, rawSchedule,
 %                                  - .yf_pay       : year fractions for payment periods
 %                                  - .F_forward    : exact forward rates
 %                                  - .B_ois        : OIS discounts
+    
     % IDENTIFY SURVIVING CASH FLOWS
     % Find indices where the payment date has NOT happened yet
     future_idx = find(rawSchedule.payDates > datenum(settlement));
