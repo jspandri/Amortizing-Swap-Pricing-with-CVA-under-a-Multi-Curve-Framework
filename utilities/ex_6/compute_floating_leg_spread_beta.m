@@ -22,7 +22,7 @@ function floating_leg_spread_beta = compute_floating_leg_spread_beta(...
     eur_dates = datenum(eur_curve.dates);
     eur_discounts = eur_curve.discounts;
     
-    % 1. EXTRACT SPOT DISCOUNT FACTORS FROM OIS CURVE (Referenced to t0)
+    % EXTRACT SPOT DISCOUNT FACTORS FROM OIS CURVE (Referenced to t0)
     % Interpolate market OIS zero rates to get discounts at accrual period starts 
     % and ends
     B_ois_start = get_discount_factor_by_zero_rates_linear_interp(...
@@ -35,7 +35,7 @@ function floating_leg_spread_beta = compute_floating_leg_spread_beta(...
     % P^D(t0; T_start, T_end) = P^D(t0, T_end) / P^D(t0, T_start)
     B_ois_forward = B_ois_end ./ B_ois_start;
     
-    % 2. EXTRACT SPOT DISCOUNT FACTORS FROM EURIBOR CURVE (Referenced to t0)
+    % EXTRACT SPOT DISCOUNT FACTORS FROM EURIBOR CURVE (Referenced to t0)
     % Interpolate market Euribor zero rates to get spot discounts at accrual period starts 
     % and ends 
     B_eur_start = get_discount_factor_by_zero_rates_linear_interp(...
@@ -47,7 +47,7 @@ function floating_leg_spread_beta = compute_floating_leg_spread_beta(...
     % P^F(t0; T_start, T_end) = P^F(t0, T_end) / P^F(t0, T_start)
     B_eur_forward = B_eur_end ./ B_eur_start;
     
-    % 3. CALCULATE VECTORIZED BETA FACTOR (Deterministic under gamma=0)
+    % CALCULATE VECTORIZED BETA FACTOR (Deterministic under gamma=0)
     % Under the gamma=0 assumption, the basis is deterministic, allowing us to 
     % define the beta adjustment as the ratio between OIS and Euribor forward 
     % prices as observed at the valuation date t0.

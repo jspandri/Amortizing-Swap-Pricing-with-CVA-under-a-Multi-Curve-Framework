@@ -28,7 +28,7 @@ function [CVA, EE_profile,vol_interp] = calculate_cva_bachelier(settlement,sched
         past_fixing_rate = [];
     end
 
-    % 1. PROBABILITY OF DEFAULT
+    % PROBABILITY OF DEFAULT
 
     % Compute ACT/365 year fractions from settlement to each payment date
     payDates = scheduleSwap.payDates;
@@ -43,12 +43,12 @@ function [CVA, EE_profile,vol_interp] = calculate_cva_bachelier(settlement,sched
     % Calculate marginal default probabilities
     PD = SP_prev - SP;
     
-    % 2. EXPECTED EXPOSURE PRICING
+    %  EXPECTED EXPOSURE PRICING
     
     [EE_profile, ~, ~,vol_interp] = price_swap_bachelier(settlement, scheduleSwap,...
         K, discountCurve, volData, past_fixing_rate);
     
-    % 3. CVA CALCULATION
+    % CVA CALCULATION
     
     % Define the loss given default
     LGD = (1 - recoveryRate);

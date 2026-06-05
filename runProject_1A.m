@@ -12,8 +12,8 @@ clear all;
 close all;
 clc;
 
-addpath("utilities\")
-addpath("data\","ex_1","ex_2\","ex_3\","ex_5","ex_6\")
+addpath("data\")
+addpath(genpath("utilities\"));
 
 %% Read data
 
