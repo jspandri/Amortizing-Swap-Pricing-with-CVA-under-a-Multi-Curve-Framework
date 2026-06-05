@@ -47,16 +47,20 @@ function plot_cva_dashboard(payDates, EE_profiles, hazardRates, recoveryRate, se
     % Figure Creation
     figure;
 
-    % Colors for the plots (Blue and Red themes for contrast)
+    % Colors for the plots 
     colors = [0, 0.4470, 0.7410;   % Deep Blue
               0.8500, 0.3250, 0.0980]; % Orange/Red
     
+    pad_days = 15; 
+    x_limits = [payDates(1) - pad_days, payDates(end) + pad_days];
+
     % Panel 1: Expected Exposure 
     subplot(2, 2, 1);
     for i = 1:num_scenarios
         plot(payDates, EE_profiles(:, i), 'LineWidth', 2.5, 'Color', colors(i,:)); hold on;
     end
-    datetick('x', 'yyyy');
+    xlim(x_limits); 
+    datetick('x', 'yyyy', 'keeplimits');
     title('1. Expected Exposure (EE)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Exposure (EUR)');
     legend(legend_labels, 'Location', 'best');
@@ -67,7 +71,8 @@ function plot_cva_dashboard(payDates, EE_profiles, hazardRates, recoveryRate, se
     for i = 1:num_scenarios
         plot(payDates, SP(:, i), '-', 'LineWidth', 2.5, 'Color', colors(i,:)); hold on;
     end
-    datetick('x', 'yyyy');
+    xlim(x_limits); 
+    datetick('x', 'yyyy', 'keeplimits');
     title('2. Survival Probability', 'FontSize', 12, 'FontWeight', 'bold');
     legend(legend_labels, 'Location', 'best');
     ylabel('Probability');
@@ -75,14 +80,14 @@ function plot_cva_dashboard(payDates, EE_profiles, hazardRates, recoveryRate, se
     
     % Panel 3: Marginal PD 
     subplot(2, 2, 3);
-    % Use 'grouped' so the bars for different scenarios sit side-by-side
     b = bar(payDates, Marginal_PD, 'grouped', 'EdgeColor', 'none');
     if num_scenarios <= length(colors)
         for i = 1:num_scenarios
             b(i).FaceColor = colors(i,:);
         end
     end
-    datetick('x', 'yyyy');
+    xlim(x_limits); 
+    datetick('x', 'yyyy', 'keeplimits');
     title('3. Marginal Default Probability', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Probability per node');
     legend(legend_labels, 'Location', 'best');
@@ -91,12 +96,12 @@ function plot_cva_dashboard(payDates, EE_profiles, hazardRates, recoveryRate, se
     % Panel 4: CVA Density 
     subplot(2, 2, 4);
     for i = 1:num_scenarios
-        % Plotting areas iteratively to avoid MATLAB's default stacking behavior
         a = area(payDates, CVA_density(:, i), 'FaceAlpha', 0.4, 'EdgeColor', colors(i,:), 'LineWidth', 1.5);
         a.FaceColor = colors(i,:);
         hold on;
     end
-    datetick('x', 'yyyy');
+    xlim(x_limits); 
+    datetick('x', 'yyyy', 'keeplimits');
     title('4. Incremental CVA (EE \times PD \times LGD)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('CVA Contribution (EUR)');
     legend(legend_labels, 'Location', 'best');

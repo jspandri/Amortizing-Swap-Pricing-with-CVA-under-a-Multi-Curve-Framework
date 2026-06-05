@@ -69,7 +69,7 @@ for i = 1:n_swaptions
     mkt_vols(i) = mkt_vol;
 end    
 
-% From implied volatilities, compute swaption price via Bachelier model
+% From implied volatilities, compute CS receiver swaption price via Bachelier model
 mkt_prices = price_swaption_bachelier(settlement, discountCurve, pseudoCurve, ...
     strike, diag_expiries, diag_tenors, mkt_vols);
 

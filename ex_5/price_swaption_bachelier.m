@@ -1,5 +1,7 @@
 function mkt_prices = price_swaption_bachelier(settlement, discountCurve, pseudoCurve, strike, expiries, tenors, sigmas)
-% PRICE_SWAPTION_BACHELIER Price cash-settled swaptions via Bachelier (normal) model (works with vectors of expiries, tenors and sigmas).
+% PRICE_SWAPTION_BACHELIER Price cash-settled swaptions via Bachelier (normal) 
+% model (works with vectors of expiries, tenors and sigmas).
+%
 %
 % INPUTS:
 %   settlement                 : [Scalar/Datetime] settlement date.
@@ -39,7 +41,7 @@ idx_norm = ~idx_zero;
 cash_annuities(idx_zero) = tenors(idx_zero); 
 cash_annuities(idx_norm) = (1 ./ swap_rates(idx_norm)) .* (1 - 1 ./ (1 + swap_rates(idx_norm)).^tenors(idx_norm));
 
-% Compute Bachelier price 
+% Compute Bachelier price (receiver swaption)
 t_alphas = yearfrac(settlement, expiry_dates, 3);
 d = (swap_rates - strike) ./ (sigmas .* sqrt(t_alphas));
 

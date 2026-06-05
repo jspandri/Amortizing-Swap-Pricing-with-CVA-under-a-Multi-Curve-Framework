@@ -82,7 +82,7 @@ plot_interpolated_volatility(scheduleSwap_22.payDates, vol_data_interp(:, 1));
 maturity_date_not_adjusted = datenum("28-Jun-2037");
 notional_amortized = scheduleSwap_22.notionals;
 % Define the known historical fixing rate for the ongoing period
-past_fixing_rate = 0.02141;
+past_fixing_rate = 0.02141; 
 
 % Generate the swap schedule starting from the new settlement date
 scheduleSwap_23 = generate_active_swap_schedule(settlement_23, rawSchedule_Excel, discountCurve_23, pseudoCurve_23);

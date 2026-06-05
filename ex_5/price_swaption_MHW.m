@@ -1,6 +1,7 @@
 function price_MHW = price_swaption_MHW(settlement, a, sigma, gamma, expiry, tenor, strike, discountCurve, pseudoCurve)
 % PRICE_SWAPTION_MHW Price cash-settled swaptions via MHW (Multi-curve Hull-White) model.
 %
+%
 % INPUTS:
 %   settlement                 : [Scalar/Datetime] settlement date.
 %   a                          : [Scalar] mean reversion parameter.
@@ -90,7 +91,7 @@ integrand = @(x) (1 / sqrt(2*pi)) * exp(-0.5 * x.^2) ...
                .* cash_annuity(S_x(x), tenor) ...
                .* (strike - S_x(x));
     
-% Compute swaption price under MHW model
+% Compute receiver swaption price under MHW model
 price_MHW = discount_expiry * integral(integrand, -10, x_star);
 end
 
