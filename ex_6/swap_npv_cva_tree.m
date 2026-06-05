@@ -1,5 +1,5 @@
 function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
-    swap_npv_cva_tree(settlement, tree, scheduleSwap, K, HazardRate, RecoveryRate)
+    swap_npv_cva_tree(settlement, tree, scheduleSwap, K, HazardRates, RecoveryRate)
 % SWAP_NPV_CVA_TREE Computes Risk-Free CVA and Risky NPV of an amortizing swap on a HW Tree.
 %
 % This function performs a backward induction on the full grid to evaluate 
@@ -24,16 +24,17 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
 %                            - .notionals    : Active outstanding amortizing notionals
 %                            - .yf_pay       : Year fractions for payment periods (ACT/360)
 %                            - .F_forward    : Forward Libor rates
-%                            - .B_ois        : discounts at payments dates%   K            : [Scalar] Fixed strike rate.
-%   HazardRate   : [Scalar] Constant default intensity (lambda).
+%                            - .B_ois        : discounts at payments datesù
+%   K            : [Scalar] Fixed strike rate.
+%   HazardRates  : [Vector] Constant default intensities (lambda).
 %   RecoveryRate : [Scalar] Recovery rate (R).
 %
 % OUTPUTS:
 %   NPV_rf       : [Scalar] Risk-Free Net Present Value.
 %   PV_float     : [Scalar] Present Value of the Floating Leg.
 %   PV_fixed     : [Scalar] Present Value of the Fixed Leg.
-%   CVA          : [Scalar] Credit Valuation Adjustment.
-%   NPV_risky    : [Scalar] Risky Swap NPV (NPV_rf - CVA).
+%   CVA          : [Vector] Credit Valuation Adjustment.
+%   NPV_risky    : [Vector] Risky Swap NPV (NPV_rf - CVA).
 %   details      : [Struct] Prices, CVA and exposure profiles.
 
     % 1. MULTI-CURVE FORWARD QUANTITIES
@@ -94,17 +95,14 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     PV_fixed = V_fixed(idx0, 1);
     NPV_rf   = V_net(idx0, 1);
 
-    % 4. CVA COMPUTATION 
+    % 4. CVA COMPUTATION (vectorized to work with a vector of hazard rates)
     LGD = 1 - RecoveryRate;
-    statePrices = tree.fit.statePrices;   % Discounted Arrow-Debreu prices
+    statePrices = tree.fit.statePrices;   % Discounted prices
     marketDF    = tree.fit.marketDF(:);   % Market OIS discounts P(0, t_i)
 
-    % Generat year fractions for the entire time grid simultaneously (ACT/365)
+    % Generate year fractions for the entire time grid simultaneously (ACT/365)
     y_grid = yearfrac(settlement, tree.gridDates, 3);
     
-    % Calculate marginal Default Probabilities for all steps: [nSteps x 1]
-    PDstep = exp(-HazardRate * y_grid(1:end-1)) - exp(-HazardRate * y_grid(2:end));
-
     % Extract the positive exposure profile strictly up to nSteps 
     % (We exclude nSteps+1 because maturity implies contract expiration)
     V_net_positive = max(V_net(:, 1:tree.nSteps), 0);
@@ -118,11 +116,16 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     safe_marketDF = max(marketDF(1:tree.nSteps), 1e-16);
     EE = discEE ./ safe_marketDF;
 
+    HazardRates = HazardRates(:).';
+    t0_vec      = y_grid(1:end-1);          
+    t1_vec      = y_grid(2:end);           
+    
+    % Calculate marginal Default Probabilities for all steps: [nSteps x 1]
+    PDstep = exp(-t0_vec * HazardRates) - exp(-t1_vec * HazardRates);
     % CVA Calculation
-    CVA = LGD * sum(PDstep .* discEE);
-
+    CVA       = LGD * sum(PDstep .* discEE, 1).';  
     % Final Risky Swap Pricing
-    NPV_risky = NPV_rf - CVA;
+    NPV_risky = NPV_rf - CVA;                          
 
     % 5. SAVE RESULTS
 
@@ -142,6 +145,7 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     details.NPV_rf             = NPV_rf;
     
     % Store CVA diagnostic profiles
+    details.HazardRates        = HazardRates;
     details.PDstep             = PDstep;
     details.discEE             = discEE; % Discounted Expected Exposure
     details.EE                 = EE;     % Undiscounted Expected Exposure

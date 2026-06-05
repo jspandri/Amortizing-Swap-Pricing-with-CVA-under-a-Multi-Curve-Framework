@@ -1,7 +1,8 @@
 % runProject_1A
 %
-% Project 1A: CVA Multi-Curve
-% Elisa Colombo, Stefano Marino, Jacopo Spandri
+% CVA Multi-Curve: Amortizing Swap
+% Group 1A:
+%   Elisa Colombo, Stefano Marino, Jacopo Spandri
 % AY2025-2026
 %
 % to run:
@@ -74,7 +75,7 @@ for i = 1:2
 end
 
 %plot_expected_exposures(scheduleSwap_22.payDates, EE_profile(:,1), EE_profile(:,2), CDS_spreads);
-plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile, HazardRates, RecoveryRate, settlement_22, [300, 500]);
+plot_cva_dashboard(scheduleSwap_22.payDates, EE_profile, HazardRates, RecoveryRate, settlement_22, [300, 500]);
 %plot_cva_educational_dashboard(scheduleSwap_22.payDates, EE_profile(:,1), HazardRates(1), RecoveryRate, settlement_22)
 plot_interpolated_volatility(scheduleSwap_22.payDates, vol_data_interp(:, 1));
 
@@ -108,7 +109,7 @@ end
 
 % Plot the Expected Exposure profiles for the unwinding date
 %plot_expected_exposures(scheduleSwap_23.payDates, EE_profile_23(:,1), EE_profile_23(:,2), CDS_spreads);
-plot_cva_educational_dashboard(scheduleSwap_23.payDates, EE_profile_23, HazardRates, RecoveryRate, settlement_23, [300, 500]);
+plot_cva_dashboard(scheduleSwap_23.payDates, EE_profile_23, HazardRates, RecoveryRate, settlement_23, [300, 500]);
 
 %% 5) Multi-Curve Swaption Model
 
@@ -117,7 +118,7 @@ diag_expiries = [1; 3; 5; 8; 10; 12; 15];
 diag_tenors = [15; 12; 10; 7; 5; 3; 1];
 gammas = [0; 0.5; 1];
 
-% Calibrate MHW parameters (with constant parameters and piecewise constant gamma) 
+% Calibrate MHW parameters (with constant parameters and piecewise constant sigma) 
 [results_const, results_pwc, mkt_prices] = calibrate_multicurve_swaption_model(settlement_22, discountCurve_22, pseudoCurve_22, vol_data_22, diag_expiries, diag_tenors, gammas);
 
 % Re-Bootstrap with convexity adjustment
@@ -135,22 +136,11 @@ sigma_const = results_const(1).sigma;  % Constant volatility (sigma)
 % Define discretization levels (Time steps per year) for convergence analysis
 precision_levels = [4, 12, 52, 365]; 
 
-% 1. Pricing for CDS Spread = 300 bps
-res_tree_300 = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_const,...
-    K_strike, settlement_22, scheduleSwap_22, precision_levels, RecoveryRate, ...
-    HazardRates(1), discountCurve_22, pseudoCurve_adj_22);
+% Pricing for both CDS spreads for all time steps per year
+res_tree = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_const, K_strike, ...
+    settlement_22, scheduleSwap_22, precision_levels, RecoveryRate, HazardRates, ...
+    discountCurve_22, pseudoCurve_adj_22);
 
-fprintf('--> Results for CDS Spread = 300bps\n');
-disp(struct2table(res_tree_300));
-
-% 2. Pricing for CDS Spread = 500 bps
-res_tree_500 = run_hw_pricing_amortizing_swap_CVA(a_param, sigma_const, ...
-    K_strike, settlement_22, scheduleSwap_22, precision_levels, RecoveryRate, ...
-    HazardRates(2), discountCurve_22, pseudoCurve_adj_22);
-
-fprintf('--> Results for CDS Spread = 500bps\n');
-disp(struct2table(res_tree_500));
-
-% Generate convergence plots 
-fig300 = plot_hw_convergence(res_tree_300, 300);
-fig500 = plot_hw_convergence(res_tree_500, 500);
+% Generate convergence plots
+plot_hw_convergence(res_tree.hazard(1), 300);
+plot_hw_convergence(res_tree.hazard(2), 500);

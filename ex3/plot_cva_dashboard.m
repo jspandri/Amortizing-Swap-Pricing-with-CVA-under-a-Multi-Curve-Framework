@@ -1,5 +1,5 @@
-function plot_cva_educational_dashboard(payDates, EE_profiles, hazardRates, recoveryRate, settlement, cdsSpreads_bps)
-    % PLOT_CVA_EDUCATIONAL_DASHBOARD Creates a 4-panel educational plot
+function plot_cva_dashboard(payDates, EE_profiles, hazardRates, recoveryRate, settlement, cdsSpreads_bps)
+    % PLOT_CVA_EDUCATIONAL_DASHBOARD Creates a 4-panel plot
     % showing how Market Risk and Credit Risk combine to form the CVA.
     % It supports multiple hazard rate scenarios for comparative analysis.
     %
@@ -45,9 +45,8 @@ function plot_cva_educational_dashboard(payDates, EE_profiles, hazardRates, reco
     end
     
     % Figure Creation
-    figure('Name', 'CVA Educational Dashboard', 'Position', [150, 150, 900, 600], 'Color', 'w');
+    figure;
 
-    
     % Colors for the plots (Blue and Red themes for contrast)
     colors = [0, 0.4470, 0.7410;   % Deep Blue
               0.8500, 0.3250, 0.0980]; % Orange/Red
@@ -104,6 +103,7 @@ function plot_cva_educational_dashboard(payDates, EE_profiles, hazardRates, reco
     grid on;
     
     % General Figure Title
-    sgtitle(sprintf('CVA Formation Mechanics - Recovery Rate: %.0f%%', ...
-            recoveryRate * 100), 'FontSize', 14, 'FontWeight', 'bold');
+    settlement_str = datestr(settlement, 'dd-mmm-yyyy');
+    sgtitle(sprintf('CVA Formation Mechanics | Settlement: %s | Recovery Rate: %.0f%%', ...
+        settlement_str, recoveryRate * 100), 'FontSize', 14, 'FontWeight', 'bold');
 end

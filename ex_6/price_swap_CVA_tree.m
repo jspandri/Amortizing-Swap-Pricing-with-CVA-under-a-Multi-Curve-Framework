@@ -1,6 +1,6 @@
 function [price, price_clean, CVA, details, tree] = price_swap_CVA_tree( ...
     a, sigma, K, settlement, scheduleSwap, stepsPerYear, ...
-    RecoveryRate, HazardRate, discountCurve, pseudoCurve)
+    RecoveryRate, HazardRates, discountCurve, pseudoCurve)
 % PRICE_SWAP_CVA_TREE Prices an amortizing Swap and computes its CVA using a calibrated Hull-White Tree.
 %
 % This function manages the construction, market calibration, and backward 
@@ -22,14 +22,14 @@ function [price, price_clean, CVA, details, tree] = price_swap_CVA_tree( ...
 %                                  - .B_ois        : discounts at payments dates
 %   stepsPerYear       : [Scalar] Number of time steps per year.
 %   RecoveryRate               : [Scalar] Recovery rate in case of default.
-%   HazardRate                 : [Scalar] Constant hazard rate (lambda) for default probability.
+%   HazardRates                : [Vectir] Constant hazard rates (lambda) for default probability.
 %   discountCurve              : [Struct] Market OIS curve (.dates, .discounts).
 %   pseudoCurve                : [Struct] Market Euribor curve (.dates, .discounts).
 %
 % OUTPUTS:
-%   price              : [Scalar] Risky Net Present Value (NPV) of the swap, accounting for CVA.
+%   price              : [Vector] Risky Net Present Value (NPV) of the swap, accounting for CVA.
 %   price_clean        : [Scalar] Risk-free (clean) Net Present Value (NPV) of the swap.
-%   CVA                : [Scalar] Credit Valuation Adjustment.
+%   CVA                : [Vector] Credit Valuation Adjustment.
 %   details            : [Struct] Multi-layered structure storing raw pricing 
 %                                 data, exposures, and cash flow details.
 %   tree               : [Struct] Tree object containing grid geometries, 
@@ -48,15 +48,16 @@ function [price, price_clean, CVA, details, tree] = price_swap_CVA_tree( ...
         scheduleSwap.accrualEnd);
     
     % 2. MARKET CURVE CALIBRATION (FORWARD INDUCTION)
-    % Perform market fitting via Arrow-Debreu state prices. 
+    % Perform market fitting via state prices. 
     % We calculates the time-varying deterministic drift vector (alpha_i) 
     % required to replicate initial OIS discount factors exactly, establishing 
     % an arbitrage-free pricing structure.
     tree = fit_hw_tree_ois(settlement, tree);
 
     % 3. BACKWARD INDUCTION
-    % Execute the backward induction on the calibrated tree. 
+    % Execute the backward induction on the calibrated tree (considering a
+    % vector of hazard rates)
     [price_clean, ~, ~, CVA, price, details] = swap_npv_cva_tree( ...
-        settlement, tree, scheduleSwap, K, HazardRate, RecoveryRate);
+        settlement, tree, scheduleSwap, K, HazardRates, RecoveryRate);
 
 end

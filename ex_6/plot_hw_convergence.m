@@ -1,4 +1,4 @@
-function fig_handle = plot_hw_convergence(results_struct, cds_bps)
+function plot_hw_convergence(results_struct, cds_bps)
 % PLOT_HW_CONVERGENCE Generates convergence plots for the Constant Sigma
 % approach in the Hull-White Trinomial Tree model.
 %
@@ -8,8 +8,6 @@ function fig_handle = plot_hw_convergence(results_struct, cds_bps)
 %                             .Risk_free_Swap_Price, .Risky_Swap_Price
 %   cds_bps        : [Scalar] CDS Spread value in basis points (for titles).
 %
-% OUTPUTS:
-%   fig_handle     : [Figure] Handle to the generated figure window.
 
     % Extract vector tracks from the results structure
     steps        = results_struct.Steps_Per_Year;
@@ -17,34 +15,37 @@ function fig_handle = plot_hw_convergence(results_struct, cds_bps)
     clean_prices = results_struct.Risk_free_Swap_Price;
     risky_prices = results_struct.Risky_Swap_Price;
     
-    fig_handle = figure('Color', [1 1 1], 'Position', [100, 100, 1100, 450]);
+    figure;
+    colorCVA     = [0, 114, 189] / 255;  
+    colorRiskFree = [100, 180, 210] / 255; 
+    colorRisky    = [225, 125, 115] / 255;
     
     % SUBPLOT 1: Credit Value Adjustment (CVA) Convergence
-    subplot(1, 2, 1);
-    plot(steps, cva_vals, '-o', 'LineWidth', 2.0, 'Color', [0 0.4470 0.7410], ...
-         'MarkerFaceColor', [0 0.4470 0.7410], 'MarkerSize', 6);
+    ax1 = subplot(1, 2, 1);
+    plot(steps, cva_vals, '-o', 'LineWidth', 2.5, 'Color', colorCVA, ...
+         'MarkerFaceColor', 'w', 'MarkerSize', 7);
     
-    title(sprintf('CVA Mesh Convergence (CDS = %d bps)', cds_bps), ...
-          'FontSize', 11, 'FontWeight', 'bold');
-    xlabel('Time Steps per Year (\Delta t)', 'FontSize', 10);
-    ylabel('CVA Value (EUR)', 'FontSize', 10);
-    grid on;
+    title(sprintf('CVA Convergence (CDS: %d bps)', cds_bps), 'FontName', 'Times New Roman', 'FontSize', 20, 'FontWeight', 'bold');
+    xlabel('Time Steps per Year', 'FontName', 'Times New Roman', 'FontSize', 18, 'FontWeight', 'bold');
+    ylabel('CVA Value (EUR)', 'FontName', 'Times New Roman', 'FontSize', 18, 'FontWeight', 'bold');
+    set(ax1, 'FontName', 'Times New Roman', 'FontSize', 16, 'Box', 'off', 'XColor', [0.3 0.3 0.3], 'YColor', [0.3 0.3 0.3], 'LineWidth', 1.5);
+    grid on; ax1.GridLineStyle = ':'; ax1.GridColor = [0.7 0.7 0.7];
     
     % SUBPLOT 2: Swap Prices Convergence (Risk-Free vs Risky)
-    subplot(1, 2, 2);
-    plot(steps, clean_prices, '--s', 'LineWidth', 1.5, 'Color', [0.4660 0.6740 0.1880], ...
-         'MarkerFaceColor', [0.4660 0.6740 0.1880], 'MarkerSize', 5, 'DisplayName', 'Risk-Free NPV');
+    ax2 = subplot(1, 2, 2);
+    plot(steps, clean_prices, '--s', 'LineWidth', 2.5, 'Color', colorRiskFree, 'MarkerSize', 6, 'DisplayName', 'Risk-Free NPV');
     hold on;
-    plot(steps, risky_prices, '-d', 'LineWidth', 2.0, 'Color', [0.6350 0.0780 0.1840], ...
-         'MarkerFaceColor', [0.6350 0.0780 0.1840], 'MarkerSize', 5, 'DisplayName', 'Risky NPV');
+    plot(steps, risky_prices, '-d', 'LineWidth', 2.5, 'Color', colorRisky, 'MarkerSize', 6, 'DisplayName', 'Risky NPV');
     
-    title(sprintf('Swap Valuation Convergence (CDS = %d bps)', cds_bps), ...
-          'FontSize', 11, 'FontWeight', 'bold');
-    xlabel('Time Steps per Year (\Delta t)', 'FontSize', 10);
-    ylabel('Net Present Value (EUR)', 'FontSize', 10);
-    legend('show', 'Location', 'east');
-    grid on;
+    title('Swap Valuation Convergence', 'FontName', 'Times New Roman', 'FontSize', 20, 'FontWeight', 'bold');
+    xlabel('Time Steps per Year', 'FontName', 'Times New Roman', 'FontSize', 18, 'FontWeight', 'bold');
+    ylabel('NPV (EUR)', 'FontName', 'Times New Roman', 'FontSize', 18, 'FontWeight', 'bold');
+    lgd = legend('show', 'Location', 'best');
+    lgd.FontName = 'Times New Roman'; lgd.FontSize = 14; lgd.Box = 'on';
     
-    sgtitle('Hull-White Trinomial Tree Numeric Convergence Analysis', ...
-            'FontSize', 13, 'FontWeight', 'bold');
+    set(ax2, 'FontName', 'Times New Roman', 'FontSize', 16, 'Box', 'off', 'XColor', [0.3 0.3 0.3], 'YColor', [0.3 0.3 0.3], 'LineWidth', 1.5);
+    grid on; ax2.GridLineStyle = ':'; ax2.GridColor = [0.7 0.7 0.7];
+    
+    sgtitle(sprintf('Hull-White Numeric Convergence'), ...
+            'FontName', 'Times New Roman', 'FontSize', 24, 'FontWeight', 'bold');
 end

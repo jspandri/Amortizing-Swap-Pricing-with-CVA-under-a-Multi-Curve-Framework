@@ -152,7 +152,7 @@ colors      = {colorG1, colorG2, colorG3};
 styles      = {'o--', '^--', 'd--'}; 
 
 % CONSTANT PARAMETERS
-figure('Name', 'MHW Calibration - Constant Sigma', 'Color', 'w');
+figure;
 hold on; 
 
 plot(diag_expiries, mkt_prices * 100, 's-', 'LineWidth', 2.5, 'MarkerSize', 8, ...
@@ -190,7 +190,7 @@ lgd.Color = [0.98 0.98 0.98];
 hold off;
 
 % PLOT PIECEWISE CONSTANT SIGMA
-figure('Name', 'MHW Calibration - Piecewise Constant', 'Color', 'w');
+figure;
 hold on; 
 
 plot(diag_expiries, mkt_prices * 100, 's-', 'LineWidth', 2.5, 'MarkerSize', 8, ...

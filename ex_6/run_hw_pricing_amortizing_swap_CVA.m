@@ -1,6 +1,6 @@
 function results_struct = run_hw_pricing_amortizing_swap_CVA( ...
     a, sigma, K, startDate, scheduleSwap, precision_levels, ...
-    RecoveryRate, HazardRate, discountCurve, pseudoCurve)
+    RecoveryRate, HazardRates, discountCurve, pseudoCurve)
 % RUN_HW_PRICING_AMORTIZING_SWAP_CVA Manages the convergence loop for pricing.
 %
 % INPUTS:
@@ -18,7 +18,7 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA( ...
 %                                       - .B_ois        : discounts at payments dates
 %   precision_levels           : [Vector] Grid steps per year to test for convergence.
 %   RecoveryRate               : [Scalar] Recovery rate in case of default.
-%   HazardRate                 : [Scalar] Constant hazard rate (lambda) for default probability.
+%   HazardRates                : [Vector] Constant hazard rates (lambda) for default probability.
 %   discountCurve              : [Struct] Market OIS curve (.dates, .discounts).
 %   pseudoCurve                : [Struct] Market Euribor curve (.dates, .discounts).
 %
@@ -33,12 +33,13 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA( ...
     
     % Determine the number of convergence levels based on the precision input
     n_levels = length(precision_levels);
+    n_hazard  = length(HazardRates);
     
     % Initialize storage vectors for prices, CVA, and grid dimension tracking
     prices_clean = zeros(n_levels, 1);
-    CVA          = zeros(n_levels, 1);
-    prices       = zeros(n_levels, 1);
-    num_steps    = zeros(n_levels, 1);
+    CVA = zeros(n_levels, n_hazard);
+    prices = zeros(n_levels, n_hazard);
+    num_steps = zeros(n_levels, 1);
     
     % CONVERGENCE LOOP
     % Iterate through each requested precision level to evaluate model numerical stability
@@ -47,34 +48,57 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA( ...
         % Extract the number of time steps per year for the current iteration
         stepsPerYear = precision_levels(j);
         
-        % Pricing execution
-        [NPV_risky, NPV_rf, CVA_val, ~, tree] = price_swap_CVA_tree( ...
-            a, sigma, K, startDate, scheduleSwap, stepsPerYear, ...
-            RecoveryRate, HazardRate, discountCurve, pseudoCurve);
+        % Pricing execution with different hazard rates together
+        [NPV_risky, NPV_rf, CVA_val, ~, tree] = price_swap_CVA_tree(a, sigma, ...
+            K, startDate, scheduleSwap, stepsPerYear, RecoveryRate, HazardRates, ...
+            discountCurve, pseudoCurve);
 
         prices_clean(j) = NPV_rf;
-        CVA(j)          = CVA_val;
-        prices(j)       = NPV_risky;
-        num_steps(j)    = tree.nSteps;
+        CVA(j, :) = CVA_val(:).';
+        prices(j, :) = NPV_risky(:).';
+        num_steps(j) = tree.nSteps;
 
     end
 
     % RESULTS PACKAGING
     % Initialize the output structured object
     results_struct = struct();
-    
-    % Store the tested precision levels
-    results_struct.Steps_Per_Year = precision_levels(:);
-    
-    % Store the corresponding total time steps computed
-    results_struct.Total_Time_Steps = num_steps(:);
-    
-    % Store the computed Risk-Free Swap Prices
-    results_struct.Risk_free_Swap_Price = prices_clean(:);
-    
-    % Store the computed Credit Value Adjustments
-    results_struct.CVA = CVA(:);
-    
-    % Store the computed Risky Swap Prices
-    results_struct.Risky_Swap_Price = prices(:);
+    results_struct.hazard = repmat(struct(), n_hazard, 1);
+    results_struct.tables = cell(n_hazard, 1);
+
+    % Separate the scenarios (different hazard rates) and print results
+    for h = 1:n_hazard
+        scenario_struct = struct();
+        scenario_struct.a                = a;
+        scenario_struct.sigma            = sigma;
+        scenario_struct.K                = K;
+        scenario_struct.startDate        = startDate;
+        scenario_struct.scheduleSwap     = scheduleSwap;
+        scenario_struct.precision_levels = precision_levels(:);
+        scenario_struct.RecoveryRate     = RecoveryRate;
+        scenario_struct.discountCurve    = discountCurve;
+        scenario_struct.pseudoCurve      = pseudoCurve;
+        scenario_struct.Steps_Per_Year       = precision_levels(:);
+        scenario_struct.Total_Time_Steps     = num_steps(:);
+        scenario_struct.Risk_free_Swap_Price = prices_clean(:);
+        scenario_struct.HazardRate       = HazardRates(h);
+        scenario_struct.CVA              = CVA(:, h);
+        scenario_struct.Risky_Swap_Price = prices(:, h);
+        
+        if h == 1
+            results_struct.hazard = scenario_struct;
+        else
+            results_struct.hazard(h) = scenario_struct;
+        end
+           
+        % Print
+        printable_struct = rmfield(scenario_struct, ...
+            {'a','sigma','K','startDate','scheduleSwap','precision_levels', ...
+             'RecoveryRate','discountCurve','pseudoCurve','HazardRate'});
+
+        results_struct.tables{h} = struct2table(printable_struct);
+
+        fprintf('--> Results for Hazard Rate = %.6f\n', HazardRates(h));
+        disp(results_struct.tables{h});
+    end
 end

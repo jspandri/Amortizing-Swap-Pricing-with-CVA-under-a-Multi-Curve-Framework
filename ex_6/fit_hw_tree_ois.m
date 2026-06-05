@@ -3,7 +3,7 @@ function tree = fit_hw_tree_ois(settlement, tree)
 % Forward Induction.
 %
 % This function calculates the deterministic drift adjustment (alpha) at each time step 
-% using Arrow-Debreu state prices to perfectly replicate the market discount factors, 
+% using state prices to perfectly replicate the market discount factors, 
 % ensuring an arbitrage-free structure.
 %
 % INPUTS:
@@ -117,7 +117,7 @@ function tree = fit_hw_tree_ois(settlement, tree)
     % Pi is a [nNodes x nNodes] matrix.
     TransitionMatrix = sparse(row_indices, col_indices, prob_values, nNodes, nNodes);
    
-    % 4. FORWARD INDUCTION (ARROW-DEBREU CALIBRATION)
+    % 4. FORWARD INDUCTION 
 
     % Initialize the state prices matrix (q)
     statePrices = zeros(nNodes, nSteps + 1);
