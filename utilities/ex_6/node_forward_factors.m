@@ -13,7 +13,7 @@ function out = node_forward_factors(settlement, tree, scheduleSwap)
 %                            - .notionals    : Active outstanding amortizing notionals
 %                            - .yf_pay       : Year fractions for payment periods (ACT/360)
 %                            - .F_forward    : Forward Libor rates
-%                            - .B_ois        : discounts at payments dates%   
+%                            - .B_ois        : discounts at payments dates   
 %
 % OUTPUTS:
 %   out          : [Struct] Containing forward discount factors (B), 
@@ -34,14 +34,16 @@ function out = node_forward_factors(settlement, tree, scheduleSwap)
         end
         
         % Date Mapping
-        % If pre-calculated scheduleMap exists, use it; otherwise, map dates to tree grid indices
+        % If pre-calculated scheduleMap exists, use it; otherwise, map dates 
+        % to tree grid indices
         if isfield(tree, 'scheduleMap') && ...
            isfield(tree.scheduleMap, 'floatStartIdx') && ...
            length(tree.scheduleMap.floatStartIdx) == nCoupons
             startIdx = tree.scheduleMap.floatStartIdx(:);
             endIdx   = tree.scheduleMap.floatEndIdx(:);
         else
-            % Calculate indices by finding the closest point in the timeGrid to the coupon dates
+            % Calculate indices by finding the closest point in the timeGrid 
+            % to the start and payment dates
             startTimes = yearfrac(settlement, startDates, 3); % (ACT/365)
             endTimes   = yearfrac(settlement, endDates, 3);% (ACT/365)
             startIdx = zeros(nCoupons,1);
@@ -51,7 +53,6 @@ function out = node_forward_factors(settlement, tree, scheduleSwap)
                 [~, endIdx(k)]   = min(abs(tree.timeGrid - endTimes(k)));
             end
         end
-        
         
         % Interpolate discount factors at start and end dates for both curves
         P0d_start = get_discount_factor_by_zero_rates_linear_interp(...
@@ -68,10 +69,10 @@ function out = node_forward_factors(settlement, tree, scheduleSwap)
         B0      = P0d_end ./ P0d_start;
         Btilde0 = P0p_end ./ P0p_start;
         beta0   = B0 ./ Btilde0;
-        
+                       
         % Ensure beta0 is valid
         if any(beta0 <= 0), error('beta0 non-positive: check the curves.'); end
-        
+
         % Backward Induction 
         nNodes = length(tree.x);
         nodeB      = zeros(nNodes, nCoupons);

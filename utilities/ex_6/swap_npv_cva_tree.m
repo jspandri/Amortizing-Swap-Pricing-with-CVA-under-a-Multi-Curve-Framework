@@ -10,9 +10,6 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
 %   - Receives floating rate (Euribor 3M)
 %   - Pays fixed rate (K)
 %
-% CVA FRAMEWORK:
-%   CVA = LGD * sum_i [ PD(t_i, t_i+1) * E[ D(0,t_i) * max(V_i, 0) ] ]
-%
 % INPUTS:
 %   settlement   : [Scalar] Settlement date t0 (datenum).
 %   tree         : [Struct] Tree data structure containing grid arrays, model parameters, 
@@ -46,7 +43,7 @@ function [NPV_rf, PV_float, PV_fixed, CVA, NPV_risky, details] = ...
     delta     = fwd.delta(:);
     nCoupons  = length(delta);
 
-    % Handle potential schedule mapping mismatches safely
+    % Handle potential schedule mapping mismatches
     if length(notionals) == nCoupons + 1
         notionals = notionals(1:end-1);
     elseif length(notionals) ~= nCoupons

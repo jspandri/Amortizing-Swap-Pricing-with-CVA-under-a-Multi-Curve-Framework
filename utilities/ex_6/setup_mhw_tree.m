@@ -135,11 +135,6 @@ function tree = setup_mhw_tree(settlementDate, lastDate, stepsPerYear, ...
                'Use precision_levels at least 4.']);
     end
     
-    % Pre-compute deterministic multi-curve adjustments (beta factors)
-    beta0 = build_deterministic_beta0( ...
-        settlementDate, floatStartDates, floatEndDates, ...
-        discountCurve, pseudoCurve);
-
     % 4) RESULTS PACKAGING
     
     % Instantiate the final tree struct
@@ -164,12 +159,10 @@ function tree = setup_mhw_tree(settlementDate, lastDate, stepsPerYear, ...
     tree.l              = l;              % Store indexes column vector
     tree.x              = x;              % Store spatial layer displacement values
     tree.discountCurve  = discountCurve;  % OIS curve 
-    tree.pseudoCurve    = pseudoCurve;    % Pseudo-discounting cuurve.
+    tree.pseudoCurve    = pseudoCurve;    % Pseudo-discounting curve.
     
     % Store final mapped node indices
     tree.scheduleMap.floatStartIdx = startIdx; % Discrete time grid index vector for accrual starts
     tree.scheduleMap.floatEndIdx   = endIdx;   % Discrete time grid index vector for accrual ends
     
-    % Store initial multi-curve spread adjustments
-    tree.spread.beta0   = beta0;
 end

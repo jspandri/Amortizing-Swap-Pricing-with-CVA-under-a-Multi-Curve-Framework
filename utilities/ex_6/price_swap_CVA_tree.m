@@ -49,7 +49,7 @@ function [price, price_clean, CVA, details, tree] = price_swap_CVA_tree( ...
     
     % MARKET CURVE CALIBRATION (FORWARD INDUCTION)
     % Perform market fitting via state prices. 
-    % We calculates the time-varying deterministic drift vector (alpha_i) 
+    % We calculate the time-varying deterministic drift vector (alpha_i) 
     % required to replicate initial OIS discount factors exactly, establishing 
     % an arbitrage-free pricing structure.
     tree = fit_hw_tree_ois(settlement, tree);

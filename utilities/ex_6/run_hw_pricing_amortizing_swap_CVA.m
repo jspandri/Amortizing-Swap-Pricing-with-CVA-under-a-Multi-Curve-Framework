@@ -33,6 +33,8 @@ function results_struct = run_hw_pricing_amortizing_swap_CVA( ...
     
     % Determine the number of convergence levels based on the precision input
     n_levels = length(precision_levels);
+    
+    % Determine the number of hazard rates
     n_hazard  = length(HazardRates);
     
     % Initialize storage vectors for prices, CVA, and grid dimension tracking
