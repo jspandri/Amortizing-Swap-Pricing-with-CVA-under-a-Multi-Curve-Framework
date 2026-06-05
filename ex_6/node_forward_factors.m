@@ -111,7 +111,7 @@ end
 
 function V = zcb_nodes_between_grid_steps(tree, startIdx, endIdx)
     % Boundary check
-    if endIdx <= startIdx, error('endIdx deve essere > startIdx.'); end
+    if endIdx <= startIdx, error('endIdx must be > startIdx.'); end
     
     nNodes = length(tree.x);
     V = ones(nNodes,1); % Initialize ZCB at maturity (payoff = 1)
