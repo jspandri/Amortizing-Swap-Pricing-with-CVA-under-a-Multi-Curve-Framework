@@ -82,9 +82,10 @@ hold off;
 
 % Print the results
 fprintf('\n CONVEXITY ADJUSTMENT IMPACT (Max Variation on Short-End) \n');
+fprintf('-------------------------------------------------------------\n');
 for i = 1:n_gammas
     max_diff_bps = max(abs(rate_variations{i}));
-    fprintf('Gamma = %.1f | Max diff vs standard curve: %.4f bps\n', gammas(i), max_diff_bps);
+    fprintf(' Gamma = %.1f | Max diff vs standard curve: %.4f bps\n', gammas(i), max_diff_bps);
 end
 
 end

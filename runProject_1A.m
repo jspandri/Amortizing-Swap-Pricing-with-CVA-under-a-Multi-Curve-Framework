@@ -50,14 +50,29 @@ vol_data_23 = read_vol_matrix_data("20230131_vol_matrix.xlsx");
 [discountCurve_23, pseudoCurve_23] = multi_curve_bootstrap(euriborSet_23, estrSet_23, true); 
 
 %% 2) Risk Free Amortizing Swap Pricing
+fprintf('\n 2)  Risk Free Amortizing Swap Pricing \n');
+
+% Set fixed rate
 K_strike = 0.0221; 
+% Generate dates and payments schedule
 scheduleSwap_22 = generate_active_swap_schedule(settlement_22, rawSchedule_Excel, discountCurve_22, pseudoCurve_22);
+
+% Compute risk-free NPV
 [NPV_riskfree, PV_fixed, PV_float] = swap_riskfree_npv(settlement_22,scheduleSwap_22,K_strike);
+
+% Compute fair fixed rate
 BPV = PV_fixed / K_strike; 
 K_fair = PV_float / BPV;
 
-%% 3) Amortizing Swap Pricing with CVA
+fprintf('\n PV Fixed Leg                      : %.4f EUR\n', PV_fixed);
+fprintf(' PV Floating Leg                   : %.4f EUR\n', PV_float);
+fprintf(' Risk-Free NPV (Bank perspective)  : %.4f EUR\n', NPV_riskfree);
+fprintf('\n Fair fixed rate                   : %.4f\n', K_fair);
 
+%% 3) Amortizing Swap Pricing with CVA
+fprintf('\n 3) Amortizing Swap Pricing with CVA \n');
+
+% Data
 RecoveryRate               = 0.6;
 CDS_spreads                = [300; 500] * 1e-4; % 300 bps and 500 bps
 HazardRates                = CDS_spreads / (1 - RecoveryRate);
@@ -66,6 +81,7 @@ EE_profile = zeros(length(scheduleSwap_22.payDates),2) ;
 Total_CVA = zeros(1,2);
 vol_data_interp=zeros(length(scheduleSwap_22.payDates),2);
 
+% Compute CVA with Swaptions (via Bachelier)
 for i = 1:2  
     [Total_CVA(i), EE_profile(:, i),vol_data_interp(:,i)] = calculate_cva_bachelier(...
         settlement_22,scheduleSwap_22,K_strike,discountCurve_22,vol_data_22,HazardRates(i),RecoveryRate);
@@ -73,13 +89,21 @@ for i = 1:2
     NPV_22(i) = NPV_riskfree - Total_CVA(i);
 end
 
+% Plots
 plot_cva_dashboard(scheduleSwap_22.payDates, EE_profile, HazardRates, RecoveryRate, settlement_22, [300, 500]);
-%plot_cva_dashboard(scheduleSwap_22.payDates, EE_profile(:,1), HazardRates(1), RecoveryRate, settlement_22)
 plot_interpolated_volatility(scheduleSwap_22.payDates, vol_data_interp(:, 1));
 
+fprintf('\n CDS Spread = 300 bps\n');
+fprintf('----------------------------------------------------\n');
+fprintf(' Credit Value Adjustment (CVA)     : %.2f EUR\n', Total_CVA(1));
+fprintf(' Risky NPV                         : %.2f EUR\n\n', NPV_22(1));
+fprintf(' CDS Spread = 500 bps\n');
+fprintf('----------------------------------------------------\n');
+fprintf(' Credit Value Adjustment (CVA)     : %.2f EUR\n', Total_CVA(2));
+fprintf(' Risky NPV                         : %.2f EUR\n', NPV_22(2));
+
 %% 4) Unwinding
-maturity_date_not_adjusted = datenum("28-Jun-2037");
-notional_amortized = scheduleSwap_22.notionals;
+fprintf('\n 4) Swap Unwinding \n');
 % Define the known historical fixing rate for the ongoing period
 past_fixing_rate = 0.02141; 
 
@@ -104,10 +128,21 @@ for i = 1:2
 end
 
 % Plot the Expected Exposure profiles for the unwinding date
-%plot_expected_exposures(scheduleSwap_23.payDates, EE_profile_23(:,1), EE_profile_23(:,2), CDS_spreads);
 plot_cva_dashboard(scheduleSwap_23.payDates, EE_profile_23, HazardRates, RecoveryRate, settlement_23, [300, 500]);
 
+
+fprintf('\n Risk-Free NPV (Bank perspective)  : %.2f EUR\n', NPV_RF_23);
+fprintf('\n CDS Spread = 300 bps\n');
+fprintf('----------------------------------------------------\n');
+fprintf(' Credit Value Adjustment (CVA)     : %.2f EUR\n', Total_CVA_23(1));
+fprintf(' Risky NPV                         : %.2f EUR\n\n', NPV_23(1));
+fprintf(' CDS Spread = 500 bps\n');
+fprintf('----------------------------------------------------\n');
+fprintf(' Credit Value Adjustment (CVA)     : %.2f EUR\n', Total_CVA_23(2));
+fprintf(' Risky NPV                         : %.2f EUR\n', NPV_23(2));
+
 %% 5) Multi-Curve Swaption Model
+fprintf('\n 5) Multi-Curve Swaption Model \n');
 
 % Define diagonals and gamma values
 diag_expiries = [1; 3; 5; 8; 10; 12; 15]; 
@@ -121,6 +156,7 @@ gammas = [0; 0.5; 1];
 [pseudoCurves_adj_22] = rebootstrap_convexity_adjustment(euriborSet_22, estrSet_22, pseudoCurve_22, gammas, results_const);
 
 %% 6) Hull-White Tree Pricing and CVA Convergence Analysis
+fprintf('\n 6) Hull-White Tree Pricing \n\n');
 
 % Retrieve the pseudo-discounting curve re-bootstrapped with MHW parameters (gamma = 0)
 pseudoCurve_adj_22 = pseudoCurves_adj_22(1).curve;

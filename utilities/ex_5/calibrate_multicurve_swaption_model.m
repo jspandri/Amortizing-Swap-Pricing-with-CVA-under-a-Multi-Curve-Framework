@@ -88,6 +88,7 @@ ub_const = [100, 100];
 best_params_a = zeros(length(gammas), 1);
 
 fprintf('\n CALIBRATING CONSTANT PARAMETERS ...\n');
+fprintf('------------------------------------------------------------------------\n');
 for i = 1:length(gammas)
     % Current gamma
     gamma = gammas(i);
@@ -109,7 +110,7 @@ for i = 1:length(gammas)
     results_const(i).resnorm = resnorm_const; 
     results_const(i).model_prices = residuals_const + mkt_prices; 
     
-    fprintf('Fixed Gamma = %.1f: a = %.4f, sigma = %.4f%% (resnorm = %e)\n', ...
+    fprintf(' Fixed Gamma = %.1f: a = %.4f, sigma = %.4f%% (resnorm = %e)\n', ...
         gamma, best_params_const(1), best_params_const(2)*100, resnorm_const);
 end
 
@@ -128,7 +129,8 @@ x0_pwc = 0.01 * ones(1, n_swaptions);
 lb_pwc = 1e-6 * ones(1, n_swaptions); 
 ub_pwc = inf * ones(1, n_swaptions);
 
-fprintf('\n CALIBRATING WITH PIECEWISE CONSTANT SIGMA (TIME DEPENDENT)... \n');
+fprintf('\n CALIBRATING WITH PIECEWISE CONSTANT SIGMA (TIME DEPENDENT) ... \n');
+fprintf('--------------------------------------------------------------------------------\n');
 
 for i = 1:length(gammas)
     % Current gamma
@@ -150,7 +152,7 @@ for i = 1:length(gammas)
     results_pwc(i).SSE = resnorm_pwc; 
     results_pwc(i).model_prices = residuals_pwc + mkt_prices; 
     
-    fprintf('Fixed Gamma = %.1f and a = %.4f: Mean Sigma = %.4f%% (resnorm = %e)\n', ...
+    fprintf(' Fixed Gamma = %.1f and a = %.4f: Mean Sigma = %.4f%% (resnorm = %e)\n', ...
         gamma, a_fixed, mean(best_sigmas)*100, resnorm_pwc);
 end
 
