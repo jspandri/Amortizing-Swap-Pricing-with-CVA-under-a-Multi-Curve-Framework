@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project focuses on the pricing of amortizing swaps within a multi-curve interest rate framework, including counterparty credit risk adjustments (CVA), model calibration procedures, and numerical valuation techniques.
+This project focuses on pricing an amortizing Interest Rate Swap (IRS) within a multi-curve framework. A discounting curve (OIS ESTR) and a pseudo-discounting curve (Euribor3M) are constructed using the “Crab” approach. Additionally, we compute the Credit Value Adjustment (CVA) to account for counterparty credit risk. To achieve this, two methodologies are implemented: an analytic approach, pricing physical delivery swaptions via the Bachelier model, and a numerical approach. The latter employs a parsimonious Multi-Curve Hull-White (MHW) model, a framework that extends the original HW model by introducing just one additional spread parameter γ, which allocates the volatility between the two curves. The model is first calibrated by pricing swaptions via a generalized Jamshidian approach. Once calibrated, it is implemented on a recombining trinomial tree to numerically price the amortizing swap. 
 
 ## Repository Structure
 
@@ -21,14 +21,6 @@ This project focuses on the pricing of amortizing swaps within a multi-curve int
 
 - **Project1_CVA_Multicurve.pdf**
   - Main project document containing instructions and methodology
-
-## Main Components
-
-- Multi-curve market calibration  
-- Risk-free amortizing swap pricing  
-- CVA-adjusted pricing framework (simplified approach)  
-- Swaption model calibration for selected parameter values  
-- Numerical techniques for pricing and unwinding analysis  
 
 ## Requirements
 
